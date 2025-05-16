@@ -205,7 +205,7 @@ def analyze_image_with_google(image_bytes, credentials_path):
         }
 
 # CLIP model implementation (local, no API cost)
-def analyze_image_with_clip(image_bytes, use_furniture_categories=True):
+def analyze_image_with_clip(image_bytes, use_furniture_categories=True, min_confidence=0.05, temperature=0.9):
     if not has_clip:
         return {
             "success": False,
@@ -224,16 +224,51 @@ def analyze_image_with_clip(image_bytes, use_furniture_categories=True):
         
         # Define categories to check against
         if use_furniture_categories:
-            # Furniture-specific categories for Skypad's domain
+            # Enhanced furniture-specific categories with more detailed descriptions
             categories = [
-                "chair", "sofa", "table", "desk", "bed", "couch", "lamp", "drawer", 
-                "cabinet", "furniture", "bedroom", "living room", "dining room",
-                "office", "hotel lobby", "restaurant", "modern furniture", "luxury furniture",
-                "wooden furniture", "metal furniture", "upholstered furniture", "outdoor furniture",
-                "interior design", "minimalist design", "traditional design"
+                # Seating
+                "dining chair", "office chair", "accent chair", "armchair", "lounge chair", 
+                "recliner", "bar stool", "counter stool", "sofa", "loveseat", "sectional sofa",
+                "chaise lounge", "ottoman", "bench", "outdoor bench",
+                
+                # Tables
+                "coffee table", "dining table", "side table", "console table", "desk", 
+                "writing desk", "computer desk", "executive desk", "nightstand", "end table",
+                "bistro table", "outdoor dining table", "conference table",
+                
+                # Storage
+                "bookcase", "bookshelf", "cabinet", "storage cabinet", "file cabinet", 
+                "sideboard", "hutch", "wardrobe", "chest of drawers", "dresser", 
+                "credenza", "media console", "display case",
+                
+                # Beds
+                "bed frame", "king bed", "queen bed", "twin bed", "bunk bed", "canopy bed",
+                "platform bed", "upholstered bed", "sleeper sofa", "daybed", "murphy bed",
+                
+                # Lighting
+                "floor lamp", "table lamp", "desk lamp", "pendant light", "chandelier",
+                "wall sconce", "ceiling light", "outdoor lighting", "task lighting",
+                
+                # Room types
+                "living room", "dining room", "bedroom", "home office", "entry hall", "foyer",
+                "kitchen", "bathroom", "outdoor patio", "outdoor terrace", "balcony",
+                "hotel lobby", "hotel room", "restaurant dining area", "cafe seating", "conference room",
+                
+                # Design styles
+                "modern interior", "contemporary interior", "minimalist interior", "traditional interior",
+                "industrial style", "mid-century modern", "scandinavian design", "rustic interior",
+                "coastal style", "bohemian style", "art deco style", "farmhouse style",
+                
+                # Materials
+                "wooden furniture", "leather furniture", "fabric upholstery", "metal furniture",
+                "glass furniture", "marble surface", "rattan furniture", "wicker furniture",
+                
+                # Features
+                "upholstered", "ergonomic", "swivel chair", "reclining", "adjustable height",
+                "with storage", "extendable", "folding", "stackable", "modular"
             ]
-            category_type = "furniture-specific"
-            prompt_prefix = "a photo of a"
+            category_type = "enhanced-furniture-specific"
+            prompt_prefix = "a photo of"
         else:
             # Completely general categories - minimal furniture overlap
             categories = [
@@ -268,10 +303,22 @@ def analyze_image_with_clip(image_bytes, use_furniture_categories=True):
             ]
             category_type = "general"
             prompt_prefix = "a photo of"
-            
-        # Convert text categories to CLIP embeddings
+        
+        # Convert text categories to CLIP embeddings with improved prompting
         tokenizer = open_clip.get_tokenizer('ViT-B-32')
-        text_tokens = tokenizer([f"{prompt_prefix} {c}" for c in categories]).to(device)
+        
+        # Create more descriptive prompts for better zero-shot performance
+        prompts = []
+        for category in categories:
+            # Use different templates based on category to improve accuracy
+            if "room" in category or "interior" in category or "style" in category or "area" in category:
+                prompts.append(f"a photo of a {category}")
+            elif category.startswith(("with", "ergonomic", "upholstered", "reclining", "adjustable", "extendable", "folding", "stackable", "modular")):
+                prompts.append(f"a photo of {category} furniture")
+            else:
+                prompts.append(f"a photo of a {category}")
+        
+        text_tokens = tokenizer(prompts).to(device)
         
         # Calculate features
         with torch.no_grad():
@@ -282,27 +329,112 @@ def analyze_image_with_clip(image_bytes, use_furniture_categories=True):
             image_features /= image_features.norm(dim=-1, keepdim=True)
             text_features /= text_features.norm(dim=-1, keepdim=True)
             
-            # Calculate similarity
-            similarity = (100.0 * image_features @ text_features.T).softmax(dim=-1)
+            # Calculate similarity with temperature scaling for better confidence distribution
+            # Lower temperature (e.g., 0.8) gives sharper peaks, higher (e.g., 1.2) gives more even distribution
+            # Use the temperature parameter passed from the UI
+            similarity = (100.0 * image_features @ text_features.T / temperature).softmax(dim=-1)
             
-        # Get top matches
-        values, indices = similarity[0].topk(5)
+        # Apply confidence threshold to filter out low-confidence predictions
+        # This helps prevent generic categories from being assigned when they're not relevant
+        # Use the min_confidence parameter passed from the UI
+        confidence_mask = similarity[0] >= min_confidence
         
-        # Compile results
-        tags = []
+        # If we filtered out everything, just take the top 5
+        if not torch.any(confidence_mask):
+            values, indices = similarity[0].topk(5)
+        else:
+            # Get values that meet threshold and take top matches (up to 8)
+            filtered_similarity = similarity[0] * confidence_mask
+            values, indices = filtered_similarity.topk(min(8, torch.sum(confidence_mask).item()))
+        
+        # Compile results with filtering for overlapping or redundant categories
+        raw_tags = []
         for value, index in zip(values, indices):
-            tags.append({
+            raw_tags.append({
                 "description": categories[index],
                 "score": float(value)
             })
         
-        # Generate a simple caption based on top tags
-        top_tags = [tag["description"] for tag in tags[:3]]
-        caption = f"Image showing {', '.join(top_tags)}"
+        # Filter out redundant/overlapping categories to ensure diversity in results
+        filtered_tags = []
+        used_terms = set()
         
-        # Generate a simple explanation
-        explanation = f"This image appears to be related to {top_tags[0]}. "
-        explanation += f"It also has elements of {', '.join(top_tags[1:3])}. "
+        # Helper function to check if a tag overlaps too much with already selected tags
+        def is_redundant(tag_desc):
+            tag_words = set(tag_desc.lower().split())
+            
+            # Check overlap with existing terms
+            for existing in used_terms:
+                # If this is a subset of an existing tag or vice versa, consider redundant
+                if tag_words.issubset(existing) or existing.issubset(tag_words):
+                    return True
+                
+                # If there's significant word overlap, consider redundant
+                overlap = len(tag_words.intersection(existing)) / min(len(tag_words), len(existing))
+                if overlap > 0.7:  # 70% overlap threshold
+                    return True
+            return False
+        
+        # Add non-redundant tags to filtered list
+        for tag in raw_tags:
+            tag_desc = tag["description"].lower()
+            tag_words = set(tag_desc.split())
+            
+            if not is_redundant(tag_desc):
+                filtered_tags.append(tag)
+                used_terms.add(frozenset(tag_words))
+                
+            # Stop after we've found 5 diverse tags
+            if len(filtered_tags) >= 5:
+                break
+        
+        # If we've filtered too aggressively, add back some of the top tags
+        if len(filtered_tags) < 3:
+            for tag in raw_tags:
+                if tag not in filtered_tags:
+                    filtered_tags.append(tag)
+                if len(filtered_tags) >= 5:
+                    break
+        
+        # Use the filtered tags
+        tags = filtered_tags
+        
+        # Generate a more descriptive caption based on top tags
+        top_tags = [tag["description"] for tag in tags[:3]]
+        
+        if category_type == "enhanced-furniture-specific":
+            # Create a more natural-sounding furniture caption
+            if "room" in top_tags[0] or "interior" in top_tags[0]:
+                caption = f"Image showing a {top_tags[0]}"
+            else:
+                caption = f"Image showing {top_tags[0]}"
+                
+            if len(top_tags) > 1:
+                caption += f" with {', '.join(top_tags[1:3])}"
+        else:
+            # General caption format
+            caption = f"Image showing {', '.join(top_tags)}"
+        
+        # Generate a more informative explanation
+        if category_type == "enhanced-furniture-specific":
+            explanation = f"This image appears to show {top_tags[0]}. "
+            
+            # Group categories by type for more coherent explanation
+            furniture_items = [t for t in top_tags if any(word in t for word in ["chair", "table", "sofa", "bed", "desk", "cabinet", "shelf", "lamp"])]
+            room_types = [t for t in top_tags if any(word in t for word in ["room", "office", "lobby", "restaurant", "cafe", "area", "patio", "terrace"])]
+            style_terms = [t for t in top_tags if any(word in t for word in ["style", "design", "modern", "contemporary", "traditional", "industrial", "century", "minimalist"])]
+            
+            if furniture_items:
+                explanation += f"The furniture includes {', '.join(furniture_items)}. "
+            if room_types and room_types != furniture_items:
+                explanation += f"The space appears to be a {', '.join(room_types)}. "
+            if style_terms and style_terms != furniture_items and style_terms != room_types:
+                explanation += f"The design style is {', '.join(style_terms)}. "
+        else:
+            explanation = f"This image appears to be related to {top_tags[0]}. "
+            if len(top_tags) > 1:
+                explanation += f"It also has elements of {', '.join(top_tags[1:3])}. "
+        
         explanation += "This analysis was done using OpenAI's CLIP model (via open-clip-torch), which matches images to text descriptions without requiring API calls."
         explanation += f"\n\nCategory mode used: {category_type} (toggle checkbox to switch)"
         
@@ -313,9 +445,14 @@ def analyze_image_with_clip(image_bytes, use_furniture_categories=True):
             "explanation": explanation,
             "raw_response": {
                 "tags": tags,
+                "filtered_from": raw_tags[:10],  # Include the raw tags before filtering
                 "model": "CLIP (ViT-B-32)",
                 "device": device,
-                "category_type": category_type
+                "category_type": category_type,
+                "parameters": {
+                    "temperature": temperature,
+                    "min_confidence": min_confidence
+                }
             }
         }
     except Exception as e:
@@ -402,10 +539,33 @@ with tab1:
         
         uploaded_file = st.file_uploader(
             "Upload an image", 
-            type=["jpg", "jpeg", "png"]
+            type=["jpg", "jpeg", "png", "webp"]
         )
         
-        use_furniture_categories = st.checkbox("Use furniture-specific categories", value=True)
+        # Enhanced CLIP settings with better defaults
+        use_furniture_categories = st.checkbox("Use enhanced furniture-specific categories", value=True)
+        
+        # Advanced options for CLIP model
+        if model.startswith("CLIP"):
+            with st.expander("Advanced CLIP Settings"):
+                clip_confidence = st.slider(
+                    "Confidence Threshold (%)", 
+                    min_value=1, 
+                    max_value=25, 
+                    value=5,
+                    help="Higher values require stronger confidence for category matches"
+                )
+                
+                clip_temperature = st.slider(
+                    "Temperature", 
+                    min_value=0.5, 
+                    max_value=1.5, 
+                    value=0.9, 
+                    step=0.1,
+                    help="Lower values make predictions more decisive, higher values make them more balanced"
+                )
+                
+                st.info("💡 If CLIP is identifying everything as 'office' or 'restaurant', try increasing the confidence threshold and lowering the temperature.")
             
         if uploaded_file and (credentials or model.startswith("CLIP")) and st.button("Analyze Image"):
             with st.spinner(f"Analyzing image with {model.split('(')[0].strip()}..."):
@@ -417,7 +577,18 @@ with tab1:
                 elif model.startswith("Google"):
                     result = analyze_image_with_google(image_bytes, credentials)
                 elif model.startswith("CLIP"):
-                    result = analyze_image_with_clip(image_bytes, use_furniture_categories)
+                    # Pass the advanced settings to the CLIP analysis function
+                    clip_params = {
+                        "use_furniture_categories": use_furniture_categories
+                    }
+                    
+                    # Add advanced parameters if they exist in the UI
+                    if 'clip_confidence' in locals():
+                        clip_params["min_confidence"] = clip_confidence / 100.0  # Convert percentage to decimal
+                    if 'clip_temperature' in locals():
+                        clip_params["temperature"] = clip_temperature
+                        
+                    result = analyze_image_with_clip(image_bytes, **clip_params)
                 
                 # Store results
                 st.session_state.analysis_result = result
