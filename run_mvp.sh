@@ -14,12 +14,26 @@ if [ ! -x "$PYTHON_PATH" ]; then
     PYTHON_PATH=$(which python3)
 fi
 
+# Get system IP addresses for display purposes
+IPV4_ADDR=$(hostname -I | awk '{print $1}')
+IPV6_ADDR=$(ip -6 addr show scope global | grep -oP '(?<=inet6 )[\da-f:]+'| head -1)
+
 # Run streamlit with explicit server settings
-# Disable development mode and file watching to avoid inotify limit issues
-echo "Starting Streamlit server on port 8501 with consolidated app.py..."
+# Configure for true dual-stack support (IPv4+IPv6)
+# Enable CORS and disable XSRF protection to allow file uploads from mobile
+
+echo "Starting Streamlit server with dual IPv4+IPv6 support on port 8501"
+echo "Access via IPv4: http://${IPV4_ADDR}:8501"
+echo "Access via IPv6: http://[${IPV6_ADDR}]:8501"
+
 "$PYTHON_PATH" -m streamlit run app.py \
     --server.port 8501 \
-    --server.address 0.0.0.0 \
+    --server.address :: \
+    --server.enableCORS true \
+    --server.enableXsrfProtection false \
+    --server.headless true \
     --server.fileWatcherType none \
+    --browser.serverAddress 0.0.0.0 \
+    --browser.gatherUsageStats false \
     --global.developmentMode false "$@"
 

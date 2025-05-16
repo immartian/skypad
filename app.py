@@ -205,7 +205,7 @@ def analyze_image_with_google(image_bytes, credentials_path):
         }
 
 # CLIP model implementation (local, no API cost)
-def analyze_image_with_clip(image_bytes):
+def analyze_image_with_clip(image_bytes, use_furniture_categories=True):
     if not has_clip:
         return {
             "success": False,
@@ -222,18 +222,56 @@ def analyze_image_with_clip(image_bytes):
         image = Image.open(BytesIO(image_bytes)).convert("RGB")
         image_input = preprocess(image).unsqueeze(0).to(device)
         
-        # Define categories to check against - customized for Skypad's domain
-        furniture_categories = [
-            "chair", "sofa", "table", "desk", "bed", "couch", "lamp", "drawer", 
-            "cabinet", "furniture", "bedroom", "living room", "dining room",
-            "office", "hotel lobby", "restaurant", "modern furniture", "luxury furniture",
-            "wooden furniture", "metal furniture", "upholstered furniture", "outdoor furniture",
-            "interior design", "minimalist design", "traditional design"
-        ]
-        
+        # Define categories to check against
+        if use_furniture_categories:
+            # Furniture-specific categories for Skypad's domain
+            categories = [
+                "chair", "sofa", "table", "desk", "bed", "couch", "lamp", "drawer", 
+                "cabinet", "furniture", "bedroom", "living room", "dining room",
+                "office", "hotel lobby", "restaurant", "modern furniture", "luxury furniture",
+                "wooden furniture", "metal furniture", "upholstered furniture", "outdoor furniture",
+                "interior design", "minimalist design", "traditional design"
+            ]
+            category_type = "furniture-specific"
+            prompt_prefix = "a photo of a"
+        else:
+            # Completely general categories - minimal furniture overlap
+            categories = [
+                # People and animals
+                "person", "group of people", "crowd", "child", "baby", "adult",
+                "man", "woman", "dog", "cat", "bird", "animal", "wildlife",
+                
+                # Outdoor scenes
+                "landscape", "mountain", "beach", "ocean", "lake", "river", "forest",
+                "field", "garden", "park", "city", "urban", "rural", "building",
+                "skyscraper", "house", "street", "road", "highway", "bridge",
+                
+                # Nature elements
+                "sky", "clouds", "sunset", "sunrise", "moon", "stars", "tree", 
+                "flower", "plant", "grass", "rocks", "waterfall", "snow", "rain",
+                
+                # Indoor scenes (non-furniture focused)
+                "classroom", "gym", "museum", "theater", "stadium", "airport",
+                "train station", "grocery store", "mall", "hospital", "school",
+                
+                # Activities
+                "sports", "running", "swimming", "hiking", "dancing", "eating",
+                "cooking", "reading", "writing", "driving", "flying", "sailing",
+                
+                # Abstract concepts
+                "happy", "sad", "peaceful", "chaotic", "bright", "dark", "colorful",
+                "monochrome", "abstract", "realistic", "vintage", "modern",
+                
+                # Transportation
+                "car", "truck", "bus", "train", "airplane", "boat", "bicycle",
+                "motorcycle"
+            ]
+            category_type = "general"
+            prompt_prefix = "a photo of"
+            
         # Convert text categories to CLIP embeddings
         tokenizer = open_clip.get_tokenizer('ViT-B-32')
-        text_tokens = tokenizer([f"a photo of a {c}" for c in furniture_categories]).to(device)
+        text_tokens = tokenizer([f"{prompt_prefix} {c}" for c in categories]).to(device)
         
         # Calculate features
         with torch.no_grad():
@@ -254,7 +292,7 @@ def analyze_image_with_clip(image_bytes):
         tags = []
         for value, index in zip(values, indices):
             tags.append({
-                "description": furniture_categories[index],
+                "description": categories[index],
                 "score": float(value)
             })
         
@@ -266,6 +304,7 @@ def analyze_image_with_clip(image_bytes):
         explanation = f"This image appears to be related to {top_tags[0]}. "
         explanation += f"It also has elements of {', '.join(top_tags[1:3])}. "
         explanation += "This analysis was done using OpenAI's CLIP model (via open-clip-torch), which matches images to text descriptions without requiring API calls."
+        explanation += f"\n\nCategory mode used: {category_type} (toggle checkbox to switch)"
         
         return {
             "success": True,
@@ -275,7 +314,8 @@ def analyze_image_with_clip(image_bytes):
             "raw_response": {
                 "tags": tags,
                 "model": "CLIP (ViT-B-32)",
-                "device": device
+                "device": device,
+                "category_type": category_type
             }
         }
     except Exception as e:
@@ -364,6 +404,8 @@ with tab1:
             "Upload an image", 
             type=["jpg", "jpeg", "png"]
         )
+        
+        use_furniture_categories = st.checkbox("Use furniture-specific categories", value=True)
             
         if uploaded_file and (credentials or model.startswith("CLIP")) and st.button("Analyze Image"):
             with st.spinner(f"Analyzing image with {model.split('(')[0].strip()}..."):
@@ -375,7 +417,7 @@ with tab1:
                 elif model.startswith("Google"):
                     result = analyze_image_with_google(image_bytes, credentials)
                 elif model.startswith("CLIP"):
-                    result = analyze_image_with_clip(image_bytes)
+                    result = analyze_image_with_clip(image_bytes, use_furniture_categories)
                 
                 # Store results
                 st.session_state.analysis_result = result
