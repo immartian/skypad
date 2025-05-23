@@ -22,6 +22,17 @@ try:
 except ImportError:
     print("Warning: python-dotenv not installed. Environment variables must be set manually.")
 
+# Import Bella's system prompt
+from bella_prompt import BELLA_SYSTEM_PROMPT
+
+# Try to import OpenAI for chat functionality
+try:
+    import openai
+    has_openai = True
+except ImportError:
+    has_openai = False
+    print("Warning: OpenAI not installed. Bella chat will not be available.")
+
 # Try to import Google Vision - not critical
 try:
     from google.oauth2 import service_account
@@ -40,11 +51,11 @@ except ImportError:
     has_clip = False
     print("Warning: CLIP dependencies not installed. CLIP model will not be available.")
 
-st.set_page_config(page_title="Skypad Image Tagging & Explanation", layout="wide")
+st.set_page_config(page_title="Skypad AI Platform - MVP1", layout="wide")
 
-st.title("Skypad Image Tagging & Explanation")
+st.title("Skypad AI Platform - MVP1")
 st.write("""
-Upload images and select a vision model to automatically categorize, tag, and explain your photos.
+**Image Analysis & AI Strategy Guide** - Upload images for AI-powered tagging and chat with Bella about Skypad's AI roadmap.
 """)
 
 # Helper functions to handle credentials
@@ -464,6 +475,35 @@ def analyze_image_with_clip(image_bytes, use_furniture_categories=True, min_conf
             "traceback": tb_str
         }
 
+# Bella Chat Function
+def chat_with_bella(message, api_key):
+    """Send a message to Bella and get a response using OpenAI's API"""
+    if not has_openai:
+        return "Sorry, OpenAI library is not installed. Please install it to use Bella chat."
+    
+    try:
+        # Create the OpenAI client
+        client = openai.OpenAI(api_key=api_key)
+        
+        # Send the message to OpenAI
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": BELLA_SYSTEM_PROMPT},
+                {"role": "user", "content": message}
+            ],
+            max_tokens=800,
+            temperature=0.7
+        )
+        
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"Sorry, I encountered an error: {str(e)}"
+
+# Initialize chat history in session state
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
+
 # Main UI
 tab1, tab2 = st.tabs(["Demo", "About"])
 
@@ -628,30 +668,169 @@ with tab1:
 
 with tab2:
     st.markdown("""
-    ## About This App
+    ## About Skypad AI Platform - MVP1
     
-    This is a consolidated application for Skypad International's AI-powered image tagging and explanation system.
+    This is **MVP1** of Skypad International's AI platform, featuring both image analysis capabilities and **Bella**, your AI strategy guide.
     
-    ### How it works
+    ### 🖼️ Image Analysis
     1. Upload an image
     2. Choose a vision model:
-       - CLIP (runs locally without API costs)
-       - OpenAI GPT-4o (requires API key)
-       - Google Vision API (requires credentials)
+       - **CLIP (Local)** - runs locally without API costs, enhanced for furniture categories
+       - **OpenAI GPT-4o** - advanced analysis with natural language descriptions
+       - **Google Vision** - comprehensive object and text detection
     3. View automatic tagging, captioning, and explanations
     
-    ### Features
-    - Image analysis with locally-running CLIP model (no API costs)
-    - Image analysis with OpenAI Vision API
-    - Image analysis with Google Vision API
-    - Automatic tagging and categorization
-    - Image description and explanation
+    ### 💬 Chat with Bella
+    Bella is your AI guide for Skypad's Human+AI (HAI) strategy. She can help you understand:
+    - The six AI use cases for Skypad
+    - Implementation roadmap and phases
+    - Key terminology (DAM, taxonomy, ontology, etc.)
+    - Next steps and priorities
+    - Architecture and technical decisions
     
-    ### Next Steps
-    - Add support for batch processing multiple images
-    - Train custom models for Skypad-specific furniture and design elements
-    - Integrate with Digital Asset Management (DAM) systems
+    **Sample questions for Bella:**
+    - "What are the main AI use cases for Skypad?"
+    - "How does the DAM fit into our roadmap?"
+    - "What's the difference between taxonomy and ontology?"
+    - "Summarize our HAI strategy in one paragraph"
+    
+    ### 🎯 MVP1 Goals
+    - **Team Alignment**: Make the AI vision accessible to everyone
+    - **Knowledge Sharing**: Centralize strategy knowledge through Bella
+    - **Foundation Building**: Prepare for future AI agent development
+    - **Proof of Concept**: Demonstrate AI capabilities with image analysis
+    
+    ### 🚀 Next Steps (MVP2+)
+    - Connect Bella to live data sources (ERP, CRM)
+    - Add specialized AI agents (Vendor Intelligence, Client Insights)
+    - Batch image processing and DAM integration
+    - Advanced analytics and predictive modeling
+    
+    ### 📊 Implementation Phases
+    - **Phase 0**: Baseline Assessment (1 month)
+    - **Phase 1**: Data Foundation (2-3 months) 
+    - **Phase 2**: MVP Agents (2 months) ← *We are here*
+    - **Phase 3**: Human-in-the-Loop (2 months)
+    - **Phase 4**: Expansion (6-10 months)
+    - **Phase 5**: Continuous Optimization (6-10 months)
     """)
+
+# Sidebar for Bella Chat
+with st.sidebar:
+    st.header("💬 Chat with Bella 👩‍💼")
+    st.write("*Your AI guide for Skypad's strategy*")
+    
+    # Check if we have OpenAI capabilities
+    if not has_openai:
+        st.warning("⚠️ OpenAI library not installed. Bella chat is not available.")
+        st.info("To enable Bella, install OpenAI: `pip install openai`")
+    else:
+        # API key input for Bella
+        bella_api_key = get_api_key("OpenAI")
+        
+        if not bella_api_key:
+            bella_api_key = st.text_input(
+                "OpenAI API Key for Bella:",
+                type="password",
+                help="Enter your OpenAI API key to chat with Bella"
+            )
+            
+        if bella_api_key:
+            st.success("✅ Bella is ready to chat!")
+            
+            # Display chat history first
+            if st.session_state.chat_history:
+                st.subheader("Chat History")
+                
+                # Show recent messages (limit to last 6 messages to save space)
+                recent_messages = st.session_state.chat_history[-6:]
+                
+                for message in recent_messages:
+                    if message["role"] == "user":
+                        st.markdown(f"**You:** {message['content']}")
+                    else:
+                        st.markdown(f"**👩‍💼 Bella:** {message['content']}")
+                    st.markdown("---")
+                
+                # Show total message count
+                total_messages = len(st.session_state.chat_history)
+                if total_messages > 6:
+                    st.info(f"Showing last 6 of {total_messages} messages")
+            
+            # Quick question buttons
+            st.subheader("Quick Questions")
+            quick_questions = [
+                "What are the main AI use cases for Skypad?",
+                "What's the difference between taxonomy and ontology?",
+                "What's next after MVP0?",
+                "Summarize our HAI strategy",
+                "How does the DAM fit into our roadmap?"
+            ]
+            
+            for question in quick_questions:
+                if st.button(question, key=f"quick_{hash(question)}"):
+                    # Add question to history and get response
+                    import datetime
+                    current_time = datetime.datetime.now().strftime("%H:%M:%S")
+                    
+                    st.session_state.chat_history.append({
+                        "role": "user", 
+                        "content": question,
+                        "timestamp": current_time
+                    })
+                    
+                    with st.spinner("Bella is thinking..."):
+                        bella_response = chat_with_bella(question, bella_api_key)
+                    
+                    st.session_state.chat_history.append({
+                        "role": "assistant",
+                        "content": bella_response,
+                        "timestamp": current_time
+                    })
+                    st.rerun()
+            
+            # Chat input moved below Quick Questions
+            user_message = st.text_area(
+                "Ask Bella anything about Skypad's AI strategy:",
+                height=100,
+                placeholder="e.g., What are the main AI use cases for Skypad?",
+                key="chat_input_field"
+            )
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Send to Bella", type="primary"):
+                    if user_message.strip():
+                        # Add user message to history
+                        import datetime
+                        current_time = datetime.datetime.now().strftime("%H:%M:%S")
+                        
+                        st.session_state.chat_history.append({
+                            "role": "user",
+                            "content": user_message,
+                            "timestamp": current_time
+                        })
+                        
+                        # Get Bella's response
+                        with st.spinner("Bella is thinking..."):
+                            bella_response = chat_with_bella(user_message, bella_api_key)
+                        
+                        # Add Bella's response to history
+                        st.session_state.chat_history.append({
+                            "role": "assistant",
+                            "content": bella_response,
+                            "timestamp": current_time
+                        })
+                        
+                        # Clear the input and rerun to refresh the UI
+                        st.rerun()
+                        
+            with col2:
+                if st.button("Clear Chat"):
+                    st.session_state.chat_history = []
+                    st.rerun()
+        else:
+            st.info("👆 Enter your OpenAI API key above to start chatting with Bella")
 
 # If this script is run directly (not imported), start the Streamlit app
 if __name__ == "__main__":

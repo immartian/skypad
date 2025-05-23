@@ -5,7 +5,7 @@ export PYTHONPATH="/media/im2/plus/lab4/skypad/.skypad_app:/media/im2/plus/cuda_
 export PIP_NO_CACHE_DIR=1
 export TMPDIR="/media/im2/plus/tmp"
 
-# Completely disable Streamlit's file watcher by setting env var
+# Disable Streamlit's file watcher to avoid inotify and torch issues
 export STREAMLIT_SERVER_FILE_WATCHER_TYPE="none"
 
 # Make sure the temp directory exists
