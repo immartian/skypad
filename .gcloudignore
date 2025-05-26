@@ -1,0 +1,13 @@
+# Ignore sensitive files when deploying to Cloud Run
+.env
+__pycache__
+*.pyc
+.git
+.gitignore
+.dockerignore
+.vscode
+
+# Do not ignore these files - they will be needed for container setup
+!requirements.txt
+!app.py
+!bella_prompt.py

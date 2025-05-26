@@ -28,8 +28,11 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PORT=8501
 
+# Create a directory for credentials
+RUN mkdir -p /app/credentials
+
 # Expose the port the app runs on
 EXPOSE 8501
 
-# Command to run the application
+# Command to run the application with environment variables
 CMD streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true --server.fileWatcherType=none

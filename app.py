@@ -62,12 +62,32 @@ st.write("""
 def get_api_key(service_name):
     """Get API key from environment variables or return empty string"""
     if service_name == "OpenAI":
-        return os.environ.get("OPENAI_API_KEY", "")
+        api_key = os.environ.get("OPENAI_API_KEY", "")
+        
+        # Log info about the API key (without showing the key itself)
+        if api_key:
+            print(f"Found {service_name} API key in environment variables (length: {len(api_key)})")
+        else:
+            print(f"No {service_name} API key found in environment variables")
+        
+        return api_key
     return None
 
 def get_google_credentials_path():
     """Get Google credentials path from environment variables or return empty string"""
-    return os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+    cred_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")
+    
+    # Log info about credentials path 
+    if cred_path:
+        print(f"Found Google credentials path: {cred_path}")
+        if os.path.exists(cred_path):
+            print(f"Google credentials file exists.")
+        else:
+            print(f"Warning: Google credentials file not found at {cred_path}")
+    else:
+        print("No Google credentials path found in environment variables")
+        
+    return cred_path
 
 # OpenAI Vision API analysis function
 def analyze_image_with_openai(image_bytes, api_key):
@@ -741,13 +761,16 @@ with st.sidebar:
         # API key input for Bella
         bella_api_key = get_api_key("OpenAI")
         
+        # Only show input field if no API key found in environment
         if not bella_api_key:
             bella_api_key = st.text_input(
                 "OpenAI API Key for Bella:",
                 type="password",
                 help="Enter your OpenAI API key to chat with Bella"
             )
-            
+            if not bella_api_key:
+                st.info("👆 Enter your OpenAI API key above to start chatting with Bella")
+                
         if bella_api_key:
             st.success("✅ Bella is ready to chat!")
             
@@ -843,7 +866,7 @@ with st.sidebar:
                     st.session_state.chat_history = []
                     st.rerun()
         else:
-            st.info("👆 Enter your OpenAI API key above to start chatting with Bella")
+            # This block is now handled above
 
 # If this script is run directly (not imported), start the Streamlit app
 if __name__ == "__main__":
