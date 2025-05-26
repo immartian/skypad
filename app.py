@@ -866,7 +866,7 @@ with st.sidebar:
                     st.session_state.chat_history = []
                     st.rerun()
         else:
-            # This block is now handled above
+            st.info("👆 Enter your OpenAI API key above to start chatting with Bella")
 
 # If this script is run directly (not imported), start the Streamlit app
 if __name__ == "__main__":
