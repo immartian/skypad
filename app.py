@@ -476,7 +476,8 @@ def analyze_image_with_clip(image_bytes, use_furniture_categories=True, min_conf
         }
 
 # Bella Chat Function
-def chat_with_bella(message, api_key):
+# Add model selection parameter
+def chat_with_bella(message, api_key, chat_model="gpt-3.5-turbo"):
     """Send a message to Bella and get a response using OpenAI's API"""
     if not has_openai:
         return "Sorry, OpenAI library is not installed. Please install it to use Bella chat."
@@ -487,7 +488,7 @@ def chat_with_bella(message, api_key):
         
         # Send the message to OpenAI
         response = client.chat.completions.create(
-            model="gpt-4",
+            model=chat_model,
             messages=[
                 {"role": "system", "content": BELLA_SYSTEM_PROMPT},
                 {"role": "user", "content": message}
@@ -720,6 +721,18 @@ with st.sidebar:
     st.header("💬 Chat with Bella 👩‍💼")
     st.write("*Your AI guide for Skypad's strategy*")
     
+    # Chat model selection (cheapest by default)
+    chat_models = [
+        ("GPT-3.5-turbo (cheapest)", "gpt-3.5-turbo"),
+        ("GPT-4o (best quality)", "gpt-4o")
+    ]
+    chat_model_label = st.selectbox(
+        "Choose Chat Model:",
+        [label for label, _ in chat_models],
+        index=0
+    )
+    chat_model = dict(chat_models)[chat_model_label]
+    
     # Check if we have OpenAI capabilities
     if not has_openai:
         st.warning("⚠️ OpenAI library not installed. Bella chat is not available.")
@@ -780,7 +793,7 @@ with st.sidebar:
                     })
                     
                     with st.spinner("Bella is thinking..."):
-                        bella_response = chat_with_bella(question, bella_api_key)
+                        bella_response = chat_with_bella(question, bella_api_key, chat_model)
                     
                     st.session_state.chat_history.append({
                         "role": "assistant",
@@ -813,7 +826,7 @@ with st.sidebar:
                         
                         # Get Bella's response
                         with st.spinner("Bella is thinking..."):
-                            bella_response = chat_with_bella(user_message, bella_api_key)
+                            bella_response = chat_with_bella(user_message, bella_api_key, chat_model)
                         
                         # Add Bella's response to history
                         st.session_state.chat_history.append({
