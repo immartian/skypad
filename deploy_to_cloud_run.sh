@@ -6,6 +6,15 @@ PROJECT_ID="sage-striker-294302"  # Replace with your GCP project ID
 IMAGE_NAME="skypad-ai-app"
 REGION="us-central1"  # Change to your preferred region
 
+# Ensure we're authenticated with Google Cloud
+echo "Authenticating with Google Cloud..."
+gcloud auth login
+gcloud config set project $PROJECT_ID
+
+# Configure Docker to use gcloud credentials
+echo "Configuring Docker authentication..."
+gcloud auth configure-docker
+
 # Build the docker image
 echo "Building Docker image..."
 docker build -t $IMAGE_NAME .

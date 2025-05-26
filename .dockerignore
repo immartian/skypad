@@ -1,6 +1,13 @@
 # For local development only
 # Not needed for Cloud Run deployment
 .env
+*.env
+*env*
+
+# Credentials and secrets
+*.json
+*credentials*
+*key*
 
 # Python
 __pycache__/
