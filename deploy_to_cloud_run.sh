@@ -6,26 +6,64 @@ PROJECT_ID="sage-striker-294302"  # Replace with your GCP project ID
 IMAGE_NAME="skypad-ai-app"
 REGION="us-central1"  # Change to your preferred region
 
-# Ensure we're authenticated with Google Cloud
-echo "Authenticating with Google Cloud..."
-gcloud auth login
-gcloud config set project $PROJECT_ID
+# Command line arguments
+SKIP_AUTH=false
+SKIP_BUILD=false
 
-# Configure Docker to use gcloud credentials
-echo "Configuring Docker authentication..."
-gcloud auth configure-docker
+# Process command line arguments
+while [[ $# -gt 0 ]]; do
+  key="$1"
+  case $key in
+    --skip-auth)
+      SKIP_AUTH=true
+      shift
+      ;;
+    --skip-build)
+      SKIP_BUILD=true
+      shift
+      ;;
+    *)
+      echo "Unknown option: $key"
+      echo "Usage: $0 [--skip-auth] [--skip-build]"
+      exit 1
+      ;;
+  esac
+done
 
-# Build the docker image
-echo "Building Docker image..."
-docker build -t $IMAGE_NAME .
+# Check if we're already authenticated
+if [ "$SKIP_AUTH" = false ]; then
+  AUTHENTICATED=$(gcloud auth list --filter=status:ACTIVE --format="value(account)" 2>/dev/null)
+  if [ -z "$AUTHENTICATED" ]; then
+    echo "Authenticating with Google Cloud..."
+    gcloud auth login
+  else
+    echo "Already authenticated as: $AUTHENTICATED"
+  fi
+  
+  # Set project
+  gcloud config set project $PROJECT_ID
+  
+  # Configure Docker to use gcloud credentials
+  echo "Configuring Docker authentication..."
+  gcloud auth configure-docker
+fi
 
-# Tag the image for Google Container Registry
-echo "Tagging image for GCR..."
-docker tag $IMAGE_NAME gcr.io/$PROJECT_ID/$IMAGE_NAME
+# Build and push docker image if not skipped
+if [ "$SKIP_BUILD" = false ]; then
+  # Build the docker image
+  echo "Building Docker image..."
+  docker build -t $IMAGE_NAME .
 
-# Push to Container Registry
-echo "Pushing image to Container Registry..."
-docker push gcr.io/$PROJECT_ID/$IMAGE_NAME
+  # Tag the image for Google Container Registry
+  echo "Tagging image for GCR..."
+  docker tag $IMAGE_NAME gcr.io/$PROJECT_ID/$IMAGE_NAME
+
+  # Push to Container Registry
+  echo "Pushing image to Container Registry..."
+  docker push gcr.io/$PROJECT_ID/$IMAGE_NAME
+else
+  echo "Skipping build and push steps..."
+fi
 
 # Read environment variables from .env file
 echo "Reading environment variables from .env file..."
@@ -52,7 +90,7 @@ gcloud run deploy skypad-ai \
   --platform managed \
   --region $REGION \
   --allow-unauthenticated \
-  --memory 2Gi \
+  --memory 4Gi \
   --set-env-vars="OPENAI_API_KEY=$OPENAI_API_KEY"
 
 # Upload Google credentials to Cloud Run

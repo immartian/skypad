@@ -17,8 +17,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install additional packages needed for the app
+# Use CPU-only PyTorch to reduce memory footprint
 RUN pip install --no-cache-dir streamlit openai \
-    torch open-clip-torch pillow python-dotenv google-cloud-vision
+    torch --index-url https://download.pytorch.org/whl/cpu \
+    open-clip-torch pillow python-dotenv google-cloud-vision
 
 # Copy the application code
 COPY . .
