@@ -11,3 +11,9 @@ __pycache__
 !requirements.txt
 !app.py
 !bella_prompt.py
+
+# Allow frontend files to be included in the build
+!frontend/
+!frontend/package.json
+!frontend/package-lock.json
+!frontend/**/*
