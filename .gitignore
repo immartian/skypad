@@ -1,5 +1,5 @@
 .env
-*.json
+sage*.json
 summary.md
 use_cases.md
 images/

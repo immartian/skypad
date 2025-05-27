@@ -1,0 +1,13 @@
+{
+    "python.defaultInterpreterPath": "/media/im2/plus/cuda_env/bin/python",
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.extraPaths": [
+        "/media/im2/plus/cuda_env/lib/python3.12/site-packages"
+    ],
+    "python.envFile": "${workspaceFolder}/.env",
+    "terminal.integrated.env.linux": {
+        "TMPDIR": "/media/im2/plus/tmp",
+        "PIP_NO_CACHE_DIR": "1"
+    },
+    "python.pythonPath": "/media/im2/plus/cuda_env/bin/python"
+}
