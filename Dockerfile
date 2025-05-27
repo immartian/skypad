@@ -3,12 +3,6 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
-# Debug the directory structure to find frontend/package.json
-RUN mkdir -p /debug-copy
-COPY . /debug-copy
-RUN ls -la /debug-copy/frontend || echo "frontend dir not found"
-RUN find /debug-copy -name "package.json" || echo "No package.json found"
-
 # Create a minimal package.json file with just enough to build a placeholder
 RUN echo '{"name":"skypad-frontend","version":"1.0.0","private":true,"scripts":{"build":"mkdir -p dist && echo \"<!DOCTYPE html><html><body><h1>Skypad Placeholder</h1></body></html>\" > dist/index.html"}}' > package.json
 RUN cat package.json
@@ -52,12 +46,13 @@ COPY --from=frontend-builder /app/frontend/dist /app/static
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
-ENV PORT=8000
+# PORT will be provided by Cloud Run at runtime (usually 8080)
+ENV PORT=8080
 # Update this if your application code expects a different path for Google credentials
 ENV GOOGLE_APPLICATION_CREDENTIALS=/app/google-credentials.json 
 
-# Expose the port the app runs on
-EXPOSE 8000
+# Expose the port the app runs on (using PORT env var)
+EXPOSE ${PORT}
 
-# Command to run the application
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Command to run the application (using the PORT env var)
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT}
