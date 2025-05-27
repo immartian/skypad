@@ -9,6 +9,9 @@ RUN echo '{"name":"skypad-placeholder","version":"0.0.1","scripts":{"build":"mkd
 # Ensure package.json and package-lock.json are copied correctly
 COPY frontend/package.json frontend/package-lock.json* ./
 
+# Debug: List the contents of the build context
+RUN echo "Build context contents:" && ls -R /app/frontend
+
 # Verify that package.json was copied, fallback to placeholder if not
 RUN if [ ! -f package.json ]; then \
       echo "WARNING: frontend/package.json not found after COPY. Using placeholder for npm install."; \
