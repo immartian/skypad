@@ -4,10 +4,9 @@ FROM node:20-alpine AS frontend-builder
 WORKDIR /app
 
 # Copy the entire frontend directory
-COPY frontend/ ./frontend/
+COPY frontend/ ./
 
-# Change to frontend directory
-WORKDIR /app/frontend
+# We're already in /app and frontend files are copied to current directory
 
 # Install dependencies
 RUN npm install
@@ -44,7 +43,7 @@ COPY sage-striker-294302-b248a695e8e5.json /app/google-credentials.json
 COPY main.py bella_prompt.py utils.py ./ 
 
 # Copy built frontend assets from the frontend-builder stage
-COPY --from=frontend-builder /app/frontend/dist /app/static
+COPY --from=frontend-builder /app/dist /app/static
 
 # Add debug information after copying
 RUN echo "Static files after copy:" && ls -la /app/static && \
