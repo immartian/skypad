@@ -1,0 +1,33 @@
+# Exclude version control, IDE files, and caches
+.git/
+.vscode/
+.idea/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Exclude OS-specific files
+.DS_Store
+Thumbs.db
+
+# Exclude environment files for security
+.env
+.env.*
+*.env
+venv/
+env/
+
+# Exclude node_modules (we'll install dependencies in the Docker build)
+node_modules/
+frontend/node_modules/
+
+# DO NOT exclude these frontend files needed for the build
+!frontend/
+!frontend/package.json
+!frontend/package-lock.json
+!frontend/src/
+!frontend/public/
+!frontend/index.html
+!frontend/vite.config.ts
+!frontend/tsconfig*.json
