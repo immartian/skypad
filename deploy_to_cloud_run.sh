@@ -5,6 +5,7 @@
 PROJECT_ID="sage-striker-294302"  # Replace with your GCP project ID
 IMAGE_NAME="skypad-ai-app"
 REGION="us-central1"  # Change to your preferred region
+TIMESTAMP=$(date +%Y%m%d%H%M%S) # Generate a unique timestamp for the image tag
 
 # Command line arguments
 SKIP_AUTH=false
@@ -54,13 +55,18 @@ if [ "$SKIP_BUILD" = false ]; then
   echo "Building Docker image (forcing no-cache to ensure fresh build)..."
   docker build --no-cache -t $IMAGE_NAME .
 
-  # Tag the image for Google Container Registry
-  echo "Tagging image for GCR..."
-  docker tag $IMAGE_NAME gcr.io/$PROJECT_ID/$IMAGE_NAME
+  # Tag the image for Google Container Registry with a unique timestamp
+  echo "Tagging image for GCR with unique tag: gcr.io/$PROJECT_ID/$IMAGE_NAME:$TIMESTAMP"
+  docker tag $IMAGE_NAME gcr.io/$PROJECT_ID/$IMAGE_NAME:$TIMESTAMP
+  # Also tag with latest for convenience, though deployment will use the timestamped tag
+  docker tag $IMAGE_NAME gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
+
 
   # Push to Container Registry
-  echo "Pushing image to Container Registry..."
-  docker push gcr.io/$PROJECT_ID/$IMAGE_NAME
+  echo "Pushing timestamped image to Container Registry..."
+  docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:$TIMESTAMP
+  echo "Pushing latest tag to Container Registry..."
+  docker push gcr.io/$PROJECT_ID/$IMAGE_NAME:latest
 else
   echo "Skipping build and push steps..."
 fi
@@ -84,13 +90,13 @@ else
 fi
 
 # Deploy to Cloud Run with environment variables
-echo "Deploying to Cloud Run with environment variables..."
-gcloud run deploy skypad-ai \
-  --image gcr.io/$PROJECT_ID/$IMAGE_NAME \
-  --platform managed \
-  --region $REGION \
-  --allow-unauthenticated \
-  --memory 2Gi \
+echo "Deploying to Cloud Run with environment variables using image gcr.io/$PROJECT_ID/$IMAGE_NAME:$TIMESTAMP"
+gcloud run deploy skypad-ai \\
+  --image gcr.io/$PROJECT_ID/$IMAGE_NAME:$TIMESTAMP \\
+  --platform managed \\
+  --region $REGION \\
+  --allow-unauthenticated \\
+  --memory 2Gi \\
   --set-env-vars="OPENAI_API_KEY=$OPENAI_API_KEY"
 
 # Upload Google credentials to Cloud Run
