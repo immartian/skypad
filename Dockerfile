@@ -10,21 +10,21 @@ RUN echo '{"name":"skypad-placeholder","scripts":{"build":"mkdir -p dist && echo
 # Create directories for frontend files
 RUN mkdir -p src public
 
-# Try to copy the frontend files
-COPY frontend/package.json ./package.json || cp placeholder-package.json package.json
-COPY frontend/package-lock.json* ./package-lock.json* || echo "No package-lock.json found"
-COPY frontend/src ./src || echo "No src directory found"
-COPY frontend/public ./public || echo "No public directory found" 
-COPY frontend/index.html ./index.html || echo "No index.html found"
-COPY frontend/vite.config.ts ./vite.config.ts || echo "No vite.config.ts found"
-COPY frontend/tsconfig*.json ./ || echo "No tsconfig files found"
-
-# Debug what we have
+# Copy the frontend files - make the copy commands more robust
+COPY frontend/ ./
 RUN ls -la
 
-# Try to install dependencies and build
-RUN npm install || echo "Failed to install dependencies, will use placeholder"
-RUN npm run build || (echo "Build failed, using placeholder frontend" && npm --package=placeholder-package.json run build)
+# Debug what files we have
+RUN echo "Frontend directory contents:" && ls -la
+
+# Install dependencies with more logging
+RUN npm install || (echo "Failed to install dependencies - falling back to placeholder" && cp placeholder-package.json package.json)
+
+# Build with more detailed error reporting
+RUN npm run build || (echo "Build failed with exit code $? - using placeholder frontend" && npm --package=placeholder-package.json run build)
+
+# Verify what was built
+RUN echo "Build output:" && ls -la dist || echo "No dist directory found"
 
 # Stage 2: Python Backend
 FROM python:3.11-slim
@@ -52,13 +52,28 @@ COPY main.py bella_prompt.py utils.py ./
 # Copy built frontend assets from the frontend-builder stage
 COPY --from=frontend-builder /app/frontend/dist /app/static
 
+# Add debug information after copying
+RUN echo "Static files after copy:" && ls -la /app/static && \
+    if [ -f /app/static/index.html ]; then \
+      echo "Index.html exists in static directory"; \
+      cat /app/static/index.html | grep -o 'src="[^"]*"' || echo "No script src found in index.html"; \
+    else \
+      echo "Index.html MISSING from static directory"; \
+    fi
+
+# Copy the fallback index.html if the build process didn't create one
+RUN mkdir -p /app/static && \
+    if [ ! -f /app/static/index.html ]; then \
+    echo "<!DOCTYPE html><html><head><title>Skypad AI</title></head><body><h1>Skypad AI</h1><p>This is a fallback frontend - check build logs for details.</p></body></html>" > /app/static/index.html; \
+    fi
+
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 # PORT will be provided by Cloud Run at runtime (usually 8080)
 ENV PORT=8080
 # Update this if your application code expects a different path for Google credentials
-ENV GOOGLE_APPLICATION_CREDENTIALS=/app/google-credentials.json 
+ENV GOOGLE_APPLICATION_CREDENTIALS=/app/google-credentials.json
 
 # Expose the port the app runs on (using PORT env var)
 EXPOSE ${PORT}

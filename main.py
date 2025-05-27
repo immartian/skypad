@@ -67,7 +67,8 @@ origins = [
     "http://localhost",          # For local development if frontend is served from root
     "http://localhost:3000",     # Common port for create-react-app
     "http://localhost:5173",     # Common port for Vite
-    # Add any other origins your frontend might be served from
+    # Allow Cloud Run domain
+    "*",                         # Allow any domain - needed for Cloud Run which has dynamic URLs
 ]
 
 app.add_middleware(
