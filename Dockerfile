@@ -1,37 +1,35 @@
 # Stage 1: Build React Frontend
 FROM node:20-alpine AS frontend-builder
 
-WORKDIR /app # Initial WORKDIR /app
-
-# Copy the entire frontend directory from the build context
-# to /app/frontend/ in the image.
-COPY frontend /app/frontend/
-
-# Verify the contents of /app/frontend/ after copy
-RUN echo "Contents of /app/frontend/ in the image:" && ls -la /app/frontend/ && echo "--- End of /app/frontend/ listing ---"
-
-# Now, set the WORKDIR to where the frontend app files are
 WORKDIR /app/frontend
 
-# Install a placeholder frontend in case the build fails
-# (we'll try to build the real frontend first)
-# This will create placeholder-package.json in /app/frontend
-RUN echo '{"name":"skypad-placeholder","scripts":{"build":"mkdir -p dist && echo \\"<!DOCTYPE html><html><head><title>Skypad AI</title></head><body><h1>Skypad AI</h1><p>Frontend build placeholder - check deployment logs.</p></body></html>\\" > dist/index.html"}}' > placeholder-package.json
+# Create a valid placeholder package.json for fallback
+RUN echo '{"name":"skypad-placeholder","version":"0.0.1","scripts":{"build":"mkdir -p dist && echo \\"<!DOCTYPE html><html><head><title>Skypad AI - Placeholder</title></head><body><h1>Skypad AI - Placeholder</h1><p>Frontend build placeholder - check deployment logs.</p></body></html>\\" > dist/index.html"}}' > placeholder-package.json
 
-# The individual COPY lines for frontend/* are no longer needed here
-# as the entire directory has been copied.
+# Copy only package.json and package-lock.json first for better Docker cache usage
+COPY frontend/package.json frontend/package-lock.json* ./
 
-# Debug what files we have in the current WORKDIR (/app/frontend)
-RUN echo "Current WORKDIR (/app/frontend) contents:" && ls -la ./
+# Verify that package.json was copied, fallback to placeholder if not
+RUN if [ ! -f package.json ]; then \
+      echo "WARNING: frontend/package.json not found after COPY. Using placeholder for npm install."; \
+      cp placeholder-package.json package.json; \
+    else \
+      echo "frontend/package.json found. Proceeding with npm install."; \
+    fi
 
-# Install dependencies with more logging
-# npm install will look for package.json in the current WORKDIR (/app/frontend)
-RUN npm install || (echo "Failed to install dependencies - falling back to placeholder" && cp placeholder-package.json package.json)
+# Install dependencies (using real or placeholder package.json)
+RUN npm install || (echo "npm install failed. Using placeholder package.json." && cp placeholder-package.json package.json && npm install)
 
-# Build with more detailed error reporting
-RUN npm run build || (echo "Build failed with exit code $? - using placeholder frontend" && npm --package=placeholder-package.json run build)
+# Copy the rest of the frontend files (excluding package.json to avoid overwriting)
+COPY frontend/. ./
 
-# Verify what was built
+# Debug: List contents to see what's available for the build.
+RUN echo "Contents of /app/frontend before build:" && ls -la
+
+# Build the frontend application, fallback to placeholder build if it fails
+RUN npm run build || (echo "npm run build failed. Falling back to placeholder build." && cp placeholder-package.json package.json && npm run build)
+
+# Verify build output
 RUN echo "Build output:" && ls -la dist || echo "No dist directory found"
 
 # Stage 2: Python Backend
