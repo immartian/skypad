@@ -1,5 +1,4 @@
 # Core dependencies
-streamlit>=1.22.0
 requests>=2.28.0
 python-dotenv>=0.19.0
 Pillow>=9.0.0
@@ -7,8 +6,6 @@ Pillow>=9.0.0
 # Google Vision API (optional)
 google-cloud-vision>=3.4.0
 
-# CLIP model dependencies (optional)
-torch>=2.0.0
-open-clip-torch>=2.0.0
-ftfy
-regex
+# FastAPI and Uvicorn
+fastapi>=0.100.0
+uvicorn[standard]>=0.20.0
