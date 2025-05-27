@@ -3,15 +3,17 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
 
-# Copy the entire frontend directory
+# Copy package files first for better layer caching
+COPY frontend/package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Now copy the rest of the frontend files
 COPY frontend/ ./
 
 # Debug: Check what files are in the current directory
-RUN echo "Files in /app after COPY:" && ls -la
-
-# We're already in /app and frontend files are copied to current directory
-
-# Install dependencies
+RUN echo "Files in /app after all copies:" && ls -la
 RUN npm install
 
 # Build the frontend application
