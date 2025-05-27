@@ -91,12 +91,12 @@ fi
 
 # Deploy to Cloud Run with environment variables
 echo "Deploying to Cloud Run with environment variables using image gcr.io/$PROJECT_ID/$IMAGE_NAME:$TIMESTAMP"
-gcloud run deploy skypad-ai \\
-  --image gcr.io/$PROJECT_ID/$IMAGE_NAME:$TIMESTAMP \\
-  --platform managed \\
-  --region $REGION \\
-  --allow-unauthenticated \\
-  --memory 2Gi \\
+gcloud run deploy skypad-ai \
+  --image gcr.io/$PROJECT_ID/$IMAGE_NAME:$TIMESTAMP \
+  --platform managed \
+  --region $REGION \
+  --allow-unauthenticated \
+  --memory 2Gi \
   --set-env-vars="OPENAI_API_KEY=$OPENAI_API_KEY"
 
 # Upload Google credentials to Cloud Run
