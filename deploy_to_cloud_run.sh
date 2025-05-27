@@ -1,4 +1,6 @@
 #!/bin/bash
+set -euo pipefail # Exit on error, unset variable, or pipe failure
+
 # Script to build and deploy to Google Cloud Run
 
 # Configuration
