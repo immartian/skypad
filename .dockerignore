@@ -1,8 +1,5 @@
-# Ignore everything by default
-*
-
-# Explicitly allow the files we need
-!**/
+# Don't ignore these files - these are the files we NEED
+# First unignore all frontend files and directories
 !frontend/
 !frontend/**
 !sage-striker-294302-b248a695e8e5.json
@@ -14,31 +11,35 @@
 !images/
 !images/**
 
-# Then explicitly ignore what we don't want
-.env
-*.env
-*env*
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
+# Then explicitly ignore only what we don't want
+**/.git
+**/.gitignore
+**/.vscode
+**/.idea
+**/__pycache__
+**/*.py[cod]
+**/*$py.class
+**/*.so
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-*.egg-info/
-.installed.cfg
-*.egg
+**/build/
+**/develop-eggs/
+**/dist/
+**/downloads/
+**/eggs/
+**/.eggs/
+**/lib/
+**/lib64/
+**/parts/
+**/sdist/
+**/var/
+**/*.egg-info/
+**/.installed.cfg
+**/*.egg
+.env
+**/*.env
+**/*env*/
 .streamlit/
 .DS_Store
 Thumbs.db
-node_modules/
+**/node_modules/
 frontend/node_modules/
