@@ -1,19 +1,16 @@
 # Stage 1: Build React Frontend
 FROM node:20-alpine AS frontend-builder
 
+WORKDIR /app
+
+# Copy the entire frontend directory
+COPY frontend/ ./frontend/
+
+# Change to frontend directory
 WORKDIR /app/frontend
-
-# Create a valid placeholder package.json for fallback
-RUN echo '{"name":"skypad-placeholder","version":"0.0.1","scripts":{"build":"mkdir -p dist && echo \"<!DOCTYPE html><html><head><title>Skypad AI - Placeholder</title></head><body><h1>Skypad AI - Placeholder</h1><p>Frontend build placeholder - check deployment logs.</p></body></html>\" > dist/index.html"}}' > placeholder-package.json
-
-# Copy frontend package files directly
-COPY frontend/package*.json ./
 
 # Install dependencies
 RUN npm install
-
-# Copy frontend source files directly
-COPY frontend/ ./
 
 # Build the frontend application
 RUN npm run build
