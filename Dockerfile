@@ -34,9 +34,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application credential files
-COPY .env .
-# Ensure your GOOGLE_APPLICATION_CREDENTIALS in .env points to this path if used by backend directly
-# Or adjust the path in your Python code if it expects it elsewhere.
+# Don't copy .env file - instead we'll use runtime environment variables
+# COPY .env .
+# Copy Google credentials file
 COPY sage-striker-294302-b248a695e8e5.json /app/google-credentials.json 
 
 # Copy the backend application code

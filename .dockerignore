@@ -6,6 +6,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+# Exclude all environment files for security
 .env
 *.env
 *env*/
