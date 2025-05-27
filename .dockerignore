@@ -1,4 +1,4 @@
-# First exclude only specific directories/files that should be ignored
+# Exclude version control, IDE files, and caches
 .git/
 .vscode/
 .idea/
@@ -6,20 +6,20 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+
 # Exclude all environment files for security
 .env
 *.env
 *env*/
+
+# Exclude OS-specific files
 .streamlit/
 .DS_Store
 Thumbs.db
+
+# Exclude node_modules directories
 node_modules/
-# Make sure we don't exclude the entire frontend directory
-# Only exclude the node_modules inside frontend
 frontend/node_modules/
 
-# Explicitly include frontend package.json and lock file
-!frontend/package.json
-!frontend/package-lock.json
-
-# By default, everything else is included
+# Don't explicitly include/exclude anything else
+# The default is to include all files
