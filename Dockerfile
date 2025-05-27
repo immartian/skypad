@@ -6,6 +6,9 @@ WORKDIR /app
 # Copy the entire frontend directory
 COPY frontend/ ./
 
+# Debug: Check what files are in the current directory
+RUN echo "Files in /app after COPY:" && ls -la
+
 # We're already in /app and frontend files are copied to current directory
 
 # Install dependencies
