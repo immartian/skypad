@@ -1,22 +1,31 @@
 # Stage 1: Build React Frontend
 FROM node:20-alpine AS frontend-builder
 
+WORKDIR /app # Initial WORKDIR /app
+
+# Copy the entire frontend directory from the build context
+# to /app/frontend/ in the image.
+COPY frontend /app/frontend/
+
+# Verify the contents of /app/frontend/ after copy
+RUN echo "Contents of /app/frontend/ in the image:" && ls -la /app/frontend/ && echo "--- End of /app/frontend/ listing ---"
+
+# Now, set the WORKDIR to where the frontend app files are
 WORKDIR /app/frontend
 
 # Install a placeholder frontend in case the build fails
 # (we'll try to build the real frontend first)
-RUN echo '{"name":"skypad-placeholder","scripts":{"build":"mkdir -p dist && echo \"<!DOCTYPE html><html><head><title>Skypad AI</title></head><body><h1>Skypad AI</h1><p>Frontend build placeholder - check deployment logs.</p></body></html>\" > dist/index.html"}}' > placeholder-package.json
+# This will create placeholder-package.json in /app/frontend
+RUN echo '{"name":"skypad-placeholder","scripts":{"build":"mkdir -p dist && echo \\"<!DOCTYPE html><html><head><title>Skypad AI</title></head><body><h1>Skypad AI</h1><p>Frontend build placeholder - check deployment logs.</p></body></html>\\" > dist/index.html"}}' > placeholder-package.json
 
-# Copy the frontend files - copy each important file/directory explicitly 
-COPY frontend/package.json frontend/package-lock.json frontend/tsconfig*.json frontend/*.config.* ./
-COPY frontend/public ./public
-COPY frontend/src ./src
-COPY frontend/index.html ./
+# The individual COPY lines for frontend/* are no longer needed here
+# as the entire directory has been copied.
 
-# Debug what files we have
-RUN echo "Frontend directory contents:" && ls -la
+# Debug what files we have in the current WORKDIR (/app/frontend)
+RUN echo "Current WORKDIR (/app/frontend) contents:" && ls -la ./
 
 # Install dependencies with more logging
+# npm install will look for package.json in the current WORKDIR (/app/frontend)
 RUN npm install || (echo "Failed to install dependencies - falling back to placeholder" && cp placeholder-package.json package.json)
 
 # Build with more detailed error reporting
