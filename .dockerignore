@@ -1,8 +1,49 @@
-# Don't ignore these files - these are the files we NEED
-# First unignore all frontend files and directories
+# Standard ignores
+.git/
+.gitignore
+.vscode/
+.idea/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+.env
+*.env
+*env*/
+.streamlit/
+.DS_Store
+Thumbs.db
+
+# Node.js ignores
+node_modules/
+frontend/node_modules/
+
+# Do NOT ignore these important frontend files
 !frontend/
-!frontend/**
-!sage-striker-294302-b248a695e8e5.json
+!frontend/package.json
+!frontend/package-lock.json
+!frontend/src/
+!frontend/public/
+!frontend/index.html
+!frontend/tsconfig*.json
+!frontend/*.config.*
+
+# Other important files to include
 !*.py
 !*.txt
 !*.md
@@ -10,36 +51,4 @@
 !static/**
 !images/
 !images/**
-
-# Then explicitly ignore only what we don't want
-**/.git
-**/.gitignore
-**/.vscode
-**/.idea
-**/__pycache__
-**/*.py[cod]
-**/*$py.class
-**/*.so
-.Python
-**/build/
-**/develop-eggs/
-**/dist/
-**/downloads/
-**/eggs/
-**/.eggs/
-**/lib/
-**/lib64/
-**/parts/
-**/sdist/
-**/var/
-**/*.egg-info/
-**/.installed.cfg
-**/*.egg
-.env
-**/*.env
-**/*env*/
-.streamlit/
-.DS_Store
-Thumbs.db
-**/node_modules/
-frontend/node_modules/
+!sage-striker-294302-b248a695e8e5.json
