@@ -16,23 +16,28 @@ COPY requirements.txt .
 # Consider using pipenv or poetry for more robust dependency management
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install additional packages needed for the app
-RUN pip install --no-cache-dir streamlit openai \
-    torch open-clip-torch pillow python-dotenv google-cloud-vision
+# The following line is commented out as dependencies should now be managed by requirements.txt
+# RUN pip install --no-cache-dir streamlit openai torch open-clip-torch pillow python-dotenv google-cloud-vision
+
+# Copy the application credential files
+COPY .env .
+COPY sage-striker-294302-b248a695e8e5.json /app/google-credentials.json
 
 # Copy the application code
 COPY . .
 
 # Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PORT=8501
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PORT=8000
+ENV GOOGLE_APPLICATION_CREDENTIALS=/app/google-credentials.json
 
 # Create a directory for credentials
-RUN mkdir -p /app/credentials
+# RUN mkdir -p /app/credentials # This line is not strictly necessary if copying directly to /app
 
 # Expose the port the app runs on
-EXPOSE 8501
+EXPOSE 8000
 
 # Command to run the application with environment variables
-CMD streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true --server.fileWatcherType=none
+# CMD streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true --server.fileWatcherType=none
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
