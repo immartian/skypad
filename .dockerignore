@@ -4,11 +4,6 @@
 # *.env
 # *env*
 
-# Credentials and secrets
-# *.json
-# *credentials*
-# *key*
-
 # Python
 __pycache__/
 *.py[cod]
@@ -31,12 +26,18 @@ var/
 .installed.cfg
 *.egg
 
-# Secret files
-# sage-striker-294302-b248a695e8e5.json
-
 # Streamlit
 .streamlit/
 
 # OS specific
 .DS_Store
 Thumbs.db
+
+# Node.js
+node_modules/
+frontend/node_modules/
+
+# Don't ignore these important files
+!frontend/package.json
+!frontend/package-lock.json
+!sage-striker-294302-b248a695e8e5.json
