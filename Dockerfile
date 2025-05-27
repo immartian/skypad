@@ -16,20 +16,12 @@ COPY requirements.txt .
 # Consider using pipenv or poetry for more robust dependency management
 RUN pip install --no-cache-dir -r requirements.txt
 
-<<<<<<< HEAD
-# Install additional packages needed for the app
-# Use CPU-only PyTorch to reduce memory footprint
-RUN pip install --no-cache-dir streamlit openai \
-    torch --index-url https://download.pytorch.org/whl/cpu \
-    open-clip-torch pillow python-dotenv google-cloud-vision
-=======
 # The following line is commented out as dependencies should now be managed by requirements.txt
 # RUN pip install --no-cache-dir streamlit openai torch open-clip-torch pillow python-dotenv google-cloud-vision
 
 # Copy the application credential files
 COPY .env .
 COPY sage-striker-294302-b248a695e8e5.json /app/google-credentials.json
->>>>>>> rollback-branch
 
 # Copy the application code
 COPY . .
