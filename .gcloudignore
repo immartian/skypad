@@ -1,19 +1,26 @@
-# Ignore sensitive files when deploying to Cloud Run
+# Exclude specific directories that should be ignored
+.git/
+.vscode/
+.idea/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Exclude all environment files for security
 .env
-__pycache__
-*.pyc
-.git
-.gitignore
-.dockerignore
-.vscode
+*.env
+*env*/
 
-# Do not ignore these files - they will be needed for container setup
-!requirements.txt
-!app.py
-!bella_prompt.py
+# Exclude OS-specific files
+.streamlit/
+.DS_Store
+Thumbs.db
 
-# Allow frontend files to be included in the build
+# Exclude node_modules directories
+node_modules/
+frontend/node_modules/
+
+# Do not ignore the frontend directory and its files
 !frontend/
-!frontend/package.json
-!frontend/package-lock.json
 !frontend/**/*
