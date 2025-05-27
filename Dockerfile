@@ -3,16 +3,14 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
-# Create a minimal package.json file with just enough to build a placeholder
-RUN echo '{"name":"skypad-frontend","version":"1.0.0","private":true,"scripts":{"build":"mkdir -p dist && echo \"<!DOCTYPE html><html><body><h1>Skypad Placeholder</h1></body></html>\" > dist/index.html"}}' > package.json
-RUN cat package.json
+# Copy package.json and package-lock.json first for better layer caching
+COPY frontend/package.json frontend/package-lock.json* ./
 
-# Install minimal dependencies (no dependencies needed for our placeholder)
+# Install frontend dependencies
 RUN npm install
 
 # Copy the rest of the frontend source code
-# Copies contents of <build_context>/frontend/ to <WORKDIR>/
-COPY frontend/. .
+COPY frontend/ ./
 
 # Build the frontend application
 RUN npm run build
