@@ -1,8 +1,13 @@
+# Don't ignore these important files - these need to come first
+!frontend/package.json
+!frontend/package-lock.json
+!sage-striker-294302-b248a695e8e5.json
+
 # For local development only
 # Not needed for Cloud Run deployment
-# .env
-# *.env
-# *env*
+.env
+*.env
+*env*
 
 # Python
 __pycache__/
@@ -36,8 +41,3 @@ Thumbs.db
 # Node.js
 node_modules/
 frontend/node_modules/
-
-# Don't ignore these important files
-!frontend/package.json
-!frontend/package-lock.json
-!sage-striker-294302-b248a695e8e5.json
