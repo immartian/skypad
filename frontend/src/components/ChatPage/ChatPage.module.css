@@ -1,23 +1,85 @@
 .chatPage {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  max-width: 800px;
+  height: 100vh; /* Full viewport height */
+  max-width: 700px; /* Slightly reduced max-width */
   margin: 0 auto;
-  border: 1px solid #ccc;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0; /* Lighter border */
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08); /* Softer shadow */
+  background-color: #ffffff; /* Cleaner white background */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Modern font stack */
 }
 
-.header {
+.oldMessagesArea {
+  flex-grow: 1; /* Takes up available space */
+  overflow-y: auto; /* Allows scrolling for old messages */
+  padding: 20px 20px 10px 20px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 20px;
-  background-color: #f0f0f0;
-  border-bottom: 1px solid #ccc;
+  flex-direction: column-reverse; /* Newest old messages at the bottom of this container */
+  border-bottom: 1px solid #f0f0f0; /* Lighter separator */
 }
 
-.header h1 {
-  margin: 0;
-  font-size: 1.5em;
+/* Custom scrollbar for webkit browsers */
+.oldMessagesArea::-webkit-scrollbar {
+  width: 8px;
+}
+
+.oldMessagesArea::-webkit-scrollbar-track {
+  background: #f9f9f9;
+}
+
+.oldMessagesArea::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.oldMessagesArea::-webkit-scrollbar-thumb:hover {
+  background: #bbb;
+}
+
+
+.bellaZone {
+  padding: 25px 20px; /* Increased padding */
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0; /* Lighter separator */
+  background-color: #f9f9f9; /* Light grey for Bella's zone */
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  /* position: sticky; top: 0; z-index: 10; // Removed sticky as it can be complex with flex */
+}
+
+.bellaAvatar {
+  font-size: 3.5em; /* Slightly larger emoji */
+  margin-bottom: 8px; /* Reduced margin */
+  line-height: 1; /* Ensure emoji aligns well */
+}
+
+.currentInteractionArea {
+  padding: 15px 20px 20px 20px; /* Adjusted padding */
+  background-color: #ffffff;
+  box-shadow: 0 -1px 3px rgba(0,0,0,0.03); /* Subtle shadow for separation */
+}
+
+/* MessageList within currentInteractionArea */
+.currentInteractionArea .messageList {
+  max-height: 180px; /* Allow a bit more space for recent messages */
+  overflow-y: auto; /* Allow scroll if more than 1-2 messages make it too tall */
+  margin-bottom: 15px; /* Space before input */
+}
+
+/* Custom scrollbar for recent messages as well */
+.currentInteractionArea .messageList::-webkit-scrollbar {
+  width: 8px;
+}
+
+.currentInteractionArea .messageList::-webkit-scrollbar-track {
+  background: #f9f9f9;
+}
+
+.currentInteractionArea .messageList::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}
+
+.currentInteractionArea .messageList::-webkit-scrollbar-thumb:hover {
+  background: #bbb;
 }

@@ -1,24 +1,31 @@
 .messageItem {
   padding: 10px 15px;
-  border-radius: 15px;
-  max-width: 70%;
+  border-radius: 18px; /* Slightly more rounded */
+  max-width: 75%; /* Allow slightly wider messages */
   word-wrap: break-word;
+  transition: opacity 0.5s ease-in-out; /* Smoother dimming */
+  margin-bottom: 8px; /* Add some space between messages */
+  line-height: 1.4;
 }
 
 .userMessage {
-  background-color: #007bff;
+  background-color: #007bff; /* Standard blue for user */
   color: white;
   align-self: flex-end;
-  border-bottom-right-radius: 5px;
+  border-bottom-right-radius: 6px; /* Custom rounding for tail effect */
 }
 
 .bellaMessage {
-  background-color: #e9e9eb;
-  color: #333;
+  background-color: #f0f0f0; /* Lighter grey for Bella */
+  color: #2c2c2c; /* Darker text for better contrast */
   align-self: flex-start;
-  border-bottom-left-radius: 5px;
+  border-bottom-left-radius: 6px; /* Custom rounding for tail effect */
 }
 
 .messageItem p {
   margin: 0;
+}
+
+.dimmedMessage {
+  opacity: 0.5; /* Slightly more dimmed */
 }

@@ -51,8 +51,8 @@ fi
 # Build and push docker image if not skipped
 if [ "$SKIP_BUILD" = false ]; then
   # Build the docker image
-  echo "Building Docker image..."
-  docker build -t $IMAGE_NAME .
+  echo "Building Docker image (forcing no-cache to ensure fresh build)..."
+  docker build --no-cache -t $IMAGE_NAME .
 
   # Tag the image for Google Container Registry
   echo "Tagging image for GCR..."
@@ -90,7 +90,7 @@ gcloud run deploy skypad-ai \
   --platform managed \
   --region $REGION \
   --allow-unauthenticated \
-  --memory 4Gi \
+  --memory 2Gi \
   --set-env-vars="OPENAI_API_KEY=$OPENAI_API_KEY"
 
 # Upload Google credentials to Cloud Run

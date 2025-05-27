@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import styles from './ChatPage.module.css';
 import StatusIndicator from '../StatusIndicator/StatusIndicator';
 import MessageList from '../MessageList/MessageList';
@@ -10,24 +10,19 @@ export interface Message {
   sender: 'user' | 'bella';
 }
 
+const BELLA_EMOJI = '🧘‍♀️'; // Or any other emoji/icon
+
 const ChatPage: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    // Initial messages can be kept or removed
-    // { id: '1', text: 'Hello there!', sender: 'bella' }, 
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<string>('Online');
 
-  // Optional: Fetch initial greeting or check status on load
   useEffect(() => {
-    // You could add a health check or initial message fetch here if needed
-    // e.g., fetch('http://localhost:8000/api/health').then(...)
-    // For now, we just ensure Bella starts as 'Online' or a welcome message.
     if (messages.length === 0) {
-        setMessages([
-            { id: 'init-bella', text: "Hi! I'm Bella. How can I help you today?", sender: 'bella' }
-        ]);
+      setMessages([
+        { id: 'init-bella', text: "Hi! I'm Bella. How can I help you today?", sender: 'bella' }
+      ]);
     }
-  }, []); // Empty dependency array means this runs once on mount
+  }, []); // Removed messages from dependency array to avoid re-triggering
 
   const handleSendMessage = async (text: string) => {
     const userMessage: Message = {
@@ -39,7 +34,7 @@ const ChatPage: React.FC = () => {
     setStatus('Bella is thinking...');
 
     try {
-      const response = await fetch('http://localhost:8000/api/chat', { // Ensure backend is running on port 8000
+      const response = await fetch('http://localhost:8000/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: text }),
@@ -48,11 +43,10 @@ const ChatPage: React.FC = () => {
       if (!response.ok) {
         let errorDetail = 'Network response was not ok.';
         try {
-            const errorData = await response.json();
-            errorDetail = errorData.detail || errorDetail;
+          const errorData = await response.json();
+          errorDetail = errorData.detail || errorDetail;
         } catch (jsonError) {
-            // If parsing JSON fails, stick with the generic error or response.statusText
-            errorDetail = response.statusText || errorDetail;
+          errorDetail = response.statusText || errorDetail;
         }
         throw new Error(errorDetail);
       }
@@ -60,7 +54,7 @@ const ChatPage: React.FC = () => {
       const data = await response.json();
       const bellaMessage: Message = {
         id: Date.now().toString() + '-bella',
-        text: data.reply, 
+        text: data.reply,
         sender: 'bella',
       };
 
@@ -79,14 +73,32 @@ const ChatPage: React.FC = () => {
     }
   };
 
+  const { oldMessages, recentMessages } = useMemo(() => {
+    const RECENT_COUNT = 2;
+    if (messages.length <= RECENT_COUNT) {
+      return { oldMessages: [], recentMessages: messages };
+    }
+    return {
+      oldMessages: messages.slice(0, messages.length - RECENT_COUNT),
+      recentMessages: messages.slice(messages.length - RECENT_COUNT),
+    };
+  }, [messages]);
+
   return (
     <div className={styles.chatPage}>
-      <header className={styles.header}>
-        <h1>Bella Chat</h1>
+      <div className={styles.oldMessagesArea}>
+        <MessageList messages={oldMessages} isOldMessages={true} />
+      </div>
+
+      <div className={styles.bellaZone}>
+        <div className={styles.bellaAvatar}>{BELLA_EMOJI}</div>
         <StatusIndicator status={status} />
-      </header>
-      <MessageList messages={messages} />
-      <MessageInput onSendMessage={handleSendMessage} />
+      </div>
+
+      <div className={styles.currentInteractionArea}>
+        <MessageList messages={recentMessages} />
+        <MessageInput onSendMessage={handleSendMessage} />
+      </div>
     </div>
   );
 };

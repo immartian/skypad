@@ -1,8 +1,9 @@
 .statusIndicator {
-  font-size: 0.9em;
-  color: #555;
+  font-size: 0.95em; /* Slightly larger */
+  color: #484848; /* Darker grey for better readability */
+  padding-top: 5px; /* Add a little space above the status text */
 }
 
 .statusText {
-  font-weight: bold;
+  font-weight: 500; /* Medium weight */
 }

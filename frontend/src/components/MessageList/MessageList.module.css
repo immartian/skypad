@@ -1,8 +1,21 @@
 .messageList {
-  flex-grow: 1;
-  padding: 20px;
+  flex-grow: 1; /* Default for old messages area to take space */
+  padding: 0; /* Padding is handled by parent containers now */
   overflow-y: auto;
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* Default direction */
   gap: 10px;
+}
+
+.oldMessageList {
+  /* Styles specific to the list of old messages if needed */
+  /* flex-direction: column-reverse; is handled by the parent .oldMessagesArea */
+}
+
+/* Styles for MessageList when it's in the .currentInteractionArea */
+/* This is a bit of a workaround, ideally ChatPage.module.css would scope this better */
+/* Or MessageList could have a variant prop */
+div[class*="currentInteractionArea"] .messageList {
+ flex-grow: 0; /* Don't let recent messages list grow too much */
+ /* max-height is set in ChatPage.module.css for .currentInteractionArea .messageList */
 }
