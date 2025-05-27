@@ -4,13 +4,25 @@ FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 
 # Create a valid placeholder package.json for fallback
-RUN echo '{"name":"skypad-placeholder","version":"0.0.1","scripts":{"build":"mkdir -p dist && echo \\"<!DOCTYPE html><html><head><title>Skypad AI - Placeholder</title></head><body><h1>Skypad AI - Placeholder</h1><p>Frontend build placeholder - check deployment logs.</p></body></html>\\" > dist/index.html"}}' > placeholder-package.json
+RUN echo '{"name":"skypad-placeholder","version":"0.0.1","scripts":{"build":"mkdir -p dist && echo \"<!DOCTYPE html><html><head><title>Skypad AI - Placeholder</title></head><body><h1>Skypad AI - Placeholder</h1><p>Frontend build placeholder - check deployment logs.</p></body></html>\" > dist/index.html"}}' > placeholder-package.json
 
-# Ensure package.json and package-lock.json are copied correctly
-COPY frontend/package.json frontend/package-lock.json* ./
+# Debug: List what's available in the build context first
+RUN echo "Build context root contents:" && find /tmp -name "frontend" 2>/dev/null || echo "No frontend dir in /tmp"
 
-# Debug: List the contents of the build context
-RUN echo "Build context contents:" && ls -R /app/frontend
+# Copy the entire frontend directory first, then extract what we need
+COPY . /tmp/build_context/
+RUN if [ -d /tmp/build_context/frontend ]; then \
+      echo "Frontend directory found, copying package files..."; \
+      cp /tmp/build_context/frontend/package.json . 2>/dev/null || echo "package.json not found"; \
+      cp /tmp/build_context/frontend/package-lock.json . 2>/dev/null || echo "package-lock.json not found"; \
+    else \
+      echo "Frontend directory not found in build context"; \
+      echo "Available directories in build context:"; \
+      ls -la /tmp/build_context/ || echo "Build context copy failed"; \
+    fi
+
+# Debug: List the contents after attempted copy
+RUN echo "After copy attempt - /app/frontend contents:" && ls -la /app/frontend/
 
 # Verify that package.json was copied, fallback to placeholder if not
 RUN if [ ! -f package.json ]; then \
@@ -23,8 +35,14 @@ RUN if [ ! -f package.json ]; then \
 # Install dependencies (using real or placeholder package.json)
 RUN npm install || (echo "npm install failed. Using placeholder package.json." && cp placeholder-package.json package.json && npm install)
 
-# Copy the rest of the frontend files (excluding package.json to avoid overwriting)
-COPY frontend/. ./
+# Copy the rest of the frontend files from the temporary location
+RUN if [ -d /tmp/build_context/frontend ]; then \
+      echo "Copying all frontend files..."; \
+      cp -r /tmp/build_context/frontend/* . 2>/dev/null || echo "Frontend files copy failed"; \
+      rm -rf /tmp/build_context; \
+    else \
+      echo "No frontend directory found, using placeholder only"; \
+    fi
 
 # Debug: List contents to see what's available for the build.
 RUN echo "Contents of /app/frontend before build:" && ls -la
