@@ -21,6 +21,13 @@ Thumbs.db
 node_modules/
 frontend/node_modules/
 
-# Do not ignore the frontend directory and its files
+# DO NOT ignore these important files - they're needed for the build
 !frontend/
-!frontend/**/*
+!frontend/package.json
+!frontend/package-lock.json
+!frontend/src/
+!frontend/public/
+!frontend/index.html
+!frontend/vite.config.ts
+!frontend/tsconfig.json
+!frontend/tsconfig.node.json

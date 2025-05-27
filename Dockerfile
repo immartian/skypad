@@ -3,24 +3,34 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
 
-# First copy EVERYTHING to make sure we have the frontend files
-COPY . /app/
+# Create a clean workspace
+RUN mkdir -p /app/frontend
 
-# Debug what we got
-RUN ls -la /app/
-RUN ls -la /app/frontend || echo "Frontend dir not found"
-RUN find /app -name "package.json" || echo "No package.json found"
+# Copy frontend files to builder stage
+# First just copy package.json files for better caching
+COPY frontend/package.json /app/frontend/package.json
+COPY frontend/package-lock.json* /app/frontend/
 
+# Switch to frontend working directory
 WORKDIR /app/frontend
 
-# Install dependencies and build
-RUN if [ -f "package.json" ]; then \
-      npm install && npm run build; \
-    else \
-      echo "Creating placeholder frontend" && \
-      mkdir -p dist && \
-      echo '<!DOCTYPE html><html><head><title>Skypad AI</title></head><body><h1>Skypad AI</h1><p>Frontend build placeholder - check deployment logs.</p></body></html>' > dist/index.html; \
-    fi
+# Install dependencies
+RUN npm install
+
+# Now copy the rest of the frontend files
+COPY frontend/src/ /app/frontend/src/
+COPY frontend/public/ /app/frontend/public/
+COPY frontend/index.html /app/frontend/index.html
+COPY frontend/vite.config.ts /app/frontend/vite.config.ts
+COPY frontend/tsconfig*.json /app/frontend/
+
+# Log what was copied to debug
+RUN ls -la /app/frontend/
+
+# Build frontend application
+RUN npm run build || (echo "Build failed, creating fallback frontend" && \
+    mkdir -p dist && \
+    echo '<!DOCTYPE html><html><head><title>Skypad AI</title></head><body><h1>Skypad AI</h1><p>Full application could not be built. Check deployment logs.</p></body></html>' > dist/index.html)
 
 # Stage 2: Python Backend
 FROM python:3.11-slim
