@@ -3,15 +3,14 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
 
-# Copy package files first for better layer caching (explicit file names)
-COPY frontend/package.json ./package.json
-COPY frontend/package-lock.json ./package-lock.json
+# Copy entire frontend directory at once to avoid path issues
+COPY frontend/ ./
+
+# Debug: Check what got copied
+RUN echo "Files after copying frontend/:" && ls -la
 
 # Install dependencies
 RUN npm install
-
-# Now copy the rest of the frontend files
-COPY frontend/ ./
 
 # Build the frontend application
 RUN npm run build
