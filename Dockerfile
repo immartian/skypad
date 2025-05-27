@@ -4,14 +4,14 @@ FROM node:20-alpine AS frontend-builder
 WORKDIR /app/frontend
 
 # Copy package.json and package-lock.json (or yarn.lock)
-COPY package.json package-lock.json* ./
+COPY frontend/package.json frontend/package-lock.json* ./
 # If you use yarn, replace package-lock.json* with yarn.lock
 
 # Install frontend dependencies
 RUN npm install
 
 # Copy the rest of the frontend source code
-COPY . .
+COPY frontend/. ./
 
 # Build the frontend application
 RUN npm run build
