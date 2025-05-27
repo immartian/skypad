@@ -1,4 +1,3 @@
-\
 #!/usr/bin/env python3
 """
 Skypad Image Tagging & Explanation - FastAPI Application
@@ -10,11 +9,25 @@ import warnings
 from io import BytesIO
 from PIL import Image
 import requests
-from fastapi import FastAPI, File, UploadFile, HTTPException, Form
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Request
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware # Import CORS middleware
+import openai
+from dotenv import load_dotenv
+from bella_prompt import BELLA_SYSTEM_PROMPT
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Initialize OpenAI client
+# Ensure your OPENAI_API_KEY is set in your .env file or environment variables
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+if not openai.api_key:
+    print("Warning: OPENAI_API_KEY not found. OpenAI API calls will fail.")
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -25,17 +38,6 @@ try:
     load_dotenv()
 except ImportError:
     print("Warning: python-dotenv not installed. Environment variables must be set manually.")
-
-# Import Bella's system prompt
-from bella_prompt import BELLA_SYSTEM_PROMPT
-
-# Try to import OpenAI for chat functionality
-try:
-    import openai
-    has_openai = True
-except ImportError:
-    has_openai = False
-    print("Warning: OpenAI not installed. Bella chat will not be available.")
 
 # Try to import Google Vision - not critical
 try:
@@ -58,10 +60,29 @@ has_clip = False # Explicitly disable CLIP
 
 app = FastAPI(title="Skypad AI Platform", version="1.0")
 
-# Mount static files directory (for React build or general static files)
-# This should come before specific routes if there's a chance of overlap,
-# but for serving a single-page app (SPA), specific API routes are usually prefixed (e.g., /api)
-# or the static files mount is configured to handle unmatched paths.
+# --- CORS Middleware --- 
+# This will allow your frontend (running on a different port) to communicate with the backend.
+# For development, allowing all origins is fine. For production, restrict this to your frontend's domain.
+origins = [
+    "http://localhost",          # For local development if frontend is served from root
+    "http://localhost:3000",     # Common port for create-react-app
+    "http://localhost:5173",     # Common port for Vite
+    # Add any other origins your frontend might be served from
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
+
+# --- Static Files ---
+# Mount the static files directory to serve the React app\'s build output
+# This assumes your React app is built into \'frontend/dist\' and those files are copied to \'static\'
+# in your Dockerfile or build process.
+app.mount("/static", StaticFiles(directory="static", html=True), name="static_assets")
 
 # --- Helper functions (copied and adapted from app.py) ---
 def get_api_key(service_name: str) -> Optional[str]:
@@ -107,12 +128,18 @@ class BellaChatResponse(BaseModel):
     response: str
     error: Optional[str] = None
 
+class ChatMessage(BaseModel):
+    message: str
+
+class ChatResponse(BaseModel):
+    reply: str
+
 # --- API Endpoints ---
 
 # Serve index.html for the root path
-@app.get("/", response_class=FileResponse)
-async def read_index():
-    return FileResponse('static/index.html')
+@app.get("/")
+async def serve_react_app(request: Request): # Add request: Request
+    return FileResponse("static/index.html")
 
 @app.post("/analyze-image/", response_model=ImageAnalysisResponse)
 async def analyze_image_endpoint(
@@ -165,6 +192,33 @@ async def chat_with_bella_endpoint(request: BellaChatRequest):
         return BellaChatResponse(response=response_content)
     except Exception as e:
         return BellaChatResponse(response="", error=f"Sorry, I encountered an error: {str(e)}")
+
+@app.post("/api/chat", response_model=ChatResponse)
+async def chat_with_bella(chat_message: ChatMessage):
+    if not openai.api_key:
+        raise HTTPException(status_code=500, detail="OpenAI API key not configured.")
+    try:
+        # For simplicity, we are not maintaining conversation history here yet.
+        # In a more advanced setup, you would manage a list of messages (system, user, assistant).
+        completion = openai.chat.completions.create(
+            model="gpt-3.5-turbo",  # Or your preferred model, e.g., "gpt-4"
+            messages=[
+                {"role": "system", "content": BELLA_SYSTEM_PROMPT},
+                {"role": "user", "content": chat_message.message}
+            ]
+        )
+        # Correct way to access the message content from the response
+        reply_content = completion.choices[0].message.content
+        if reply_content is None:
+            # Handle cases where content might be None, though rare for successful completions
+            raise HTTPException(status_code=500, detail="OpenAI API returned an empty message.")
+        return ChatResponse(reply=reply_content)
+    except openai.APIError as e:
+        print(f"OpenAI API Error: {e}")
+        raise HTTPException(status_code=500, detail=f"An error occurred with the OpenAI API: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred.")
 
 # --- Analysis Functions (copied and adapted from app.py) ---
 
@@ -312,5 +366,5 @@ if __name__ == "__main__":
             with open("static/index.html", "w") as f:
                 f.write("<html><body><h1>FastAPI Backend Running</h1><p>React frontend should replace this.</p></body></html>")
     
-    app.mount("/static", StaticFiles(directory="static"), name="static") # Mount after all routes are defined
+    # app.mount("/static", StaticFiles(directory="static"), name="static") # Mount after all routes are defined
     uvicorn.run(app, host="0.0.0.0", port=8000)

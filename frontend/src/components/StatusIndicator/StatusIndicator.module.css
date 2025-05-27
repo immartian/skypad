@@ -1,0 +1,8 @@
+.statusIndicator {
+  font-size: 0.9em;
+  color: #555;
+}
+
+.statusText {
+  font-weight: bold;
+}

@@ -1,13 +1,13 @@
 # For local development only
 # Not needed for Cloud Run deployment
-.env
-*.env
-*env*
+# .env
+# *.env
+# *env*
 
 # Credentials and secrets
-*.json
-*credentials*
-*key*
+# *.json
+# *credentials*
+# *key*
 
 # Python
 __pycache__/
@@ -32,7 +32,7 @@ var/
 *.egg
 
 # Secret files
-sage-striker-294302-b248a695e8e5.json
+# sage-striker-294302-b248a695e8e5.json
 
 # Streamlit
 .streamlit/

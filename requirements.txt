@@ -9,3 +9,8 @@ google-cloud-vision>=3.4.0
 # FastAPI and Uvicorn
 fastapi>=0.100.0
 uvicorn[standard]>=0.20.0
+
+python-multipart
+
+# OpenAI API
+openai>=1.0.0
