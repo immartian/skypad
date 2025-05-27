@@ -14,6 +14,12 @@ __pycache__/
 .DS_Store
 Thumbs.db
 node_modules/
+# Make sure we don't exclude the entire frontend directory
+# Only exclude the node_modules inside frontend
 frontend/node_modules/
+
+# Explicitly include frontend package.json and lock file
+!frontend/package.json
+!frontend/package-lock.json
 
 # By default, everything else is included

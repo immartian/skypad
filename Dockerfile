@@ -3,11 +3,16 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
-# Copy package.json and package-lock.json (or yarn.lock)
-# Copies from <build_context>/frontend/package.json to <WORKDIR>/package.json
-COPY frontend/package.json .
-# Copies from <build_context>/frontend/package-lock.json (if exists) to <WORKDIR>/package-lock.json
-COPY frontend/package-lock.json* .
+# Debug the directory structure to find frontend/package.json
+RUN mkdir -p /debug-copy
+COPY . /debug-copy
+RUN ls -la /debug-copy/frontend || echo "frontend dir not found"
+RUN find /debug-copy -name "package.json" || echo "No package.json found"
+
+# Instead of trying to COPY the files directly (which is failing),
+# copy them from the already copied directory
+RUN cp /debug-copy/frontend/package.json . || echo "Failed to copy package.json"
+RUN cp /debug-copy/frontend/package-lock.json . 2>/dev/null || echo "No package-lock.json found"
 
 # Install frontend dependencies
 RUN npm install
