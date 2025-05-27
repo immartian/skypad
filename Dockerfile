@@ -7,12 +7,11 @@ WORKDIR /app/frontend
 # (we'll try to build the real frontend first)
 RUN echo '{"name":"skypad-placeholder","scripts":{"build":"mkdir -p dist && echo \"<!DOCTYPE html><html><head><title>Skypad AI</title></head><body><h1>Skypad AI</h1><p>Frontend build placeholder - check deployment logs.</p></body></html>\" > dist/index.html"}}' > placeholder-package.json
 
-# Create directories for frontend files
-RUN mkdir -p src public
-
-# Copy the frontend files - make the copy commands more robust
-COPY frontend/ ./
-RUN ls -la
+# Copy the frontend files - copy each important file/directory explicitly 
+COPY frontend/package.json frontend/package-lock.json frontend/tsconfig*.json frontend/*.config.* ./
+COPY frontend/public ./public
+COPY frontend/src ./src
+COPY frontend/index.html ./
 
 # Debug what files we have
 RUN echo "Frontend directory contents:" && ls -la
@@ -41,8 +40,10 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application credential files
-# Don't copy .env file - instead we'll use runtime environment variables
-# COPY .env .
+# Handle .env files - create empty one if doesn't exist to avoid errors
+RUN touch /app/.env
+# The COPY .env* line was removed as it was causing build errors and is redundant
+# given runtime environment variable injection.
 # Copy Google credentials file
 COPY sage-striker-294302-b248a695e8e5.json /app/google-credentials.json 
 
@@ -71,12 +72,11 @@ RUN mkdir -p /app/static && \
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 # PORT will be provided by Cloud Run at runtime (usually 8080)
-ENV PORT=8080
 # Update this if your application code expects a different path for Google credentials
 ENV GOOGLE_APPLICATION_CREDENTIALS=/app/google-credentials.json
 
-# Expose the port the app runs on (using PORT env var)
-EXPOSE ${PORT}
+# Expose port 8080 - Cloud Run will set PORT env var automatically
+EXPOSE 8080
 
-# Command to run the application (using the PORT env var)
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT}
+# Command to run the application - use PORT env var which will be set by Cloud Run
+CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}

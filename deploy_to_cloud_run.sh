@@ -115,7 +115,7 @@ gcloud run deploy skypad-ai \
   --allow-unauthenticated \
   --memory 2Gi \
   --timeout=300 \
-  --set-env-vars="OPENAI_API_KEY=$OPENAI_API_KEY,PORT=8080"
+  --set-env-vars="OPENAI_API_KEY=$OPENAI_API_KEY"
 
 # Check if deployment was successful
 if [ $? -ne 0 ]; then
