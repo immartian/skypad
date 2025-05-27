@@ -6,7 +6,7 @@ WORKDIR /app/frontend
 # Create a valid placeholder package.json for fallback
 RUN echo '{"name":"skypad-placeholder","version":"0.0.1","scripts":{"build":"mkdir -p dist && echo \\"<!DOCTYPE html><html><head><title>Skypad AI - Placeholder</title></head><body><h1>Skypad AI - Placeholder</h1><p>Frontend build placeholder - check deployment logs.</p></body></html>\\" > dist/index.html"}}' > placeholder-package.json
 
-# Copy only package.json and package-lock.json first for better Docker cache usage
+# Ensure package.json and package-lock.json are copied correctly
 COPY frontend/package.json frontend/package-lock.json* ./
 
 # Verify that package.json was copied, fallback to placeholder if not
