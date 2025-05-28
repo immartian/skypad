@@ -24,7 +24,7 @@ const ChatPage: React.FC = () => {
   useEffect(() => {
     if (messages.length === 0) {
       setMessages([
-        { id: 'init-bella', text: "Hi! I'm Bella. How can I help you today?", sender: 'bella' }
+        { id: 'init-bella', text: "Hi, Bella here. Please feel free to ask me any questions about Skypad AI system powered by RE theory. Also you can try to upload furniture images to analyze its style.", sender: 'bella' }
       ]);
     }
   }, []); // Removed messages from dependency array to avoid re-triggering

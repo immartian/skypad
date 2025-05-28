@@ -42,7 +42,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onFocus }) =
           onChange={(e) => setMessage(e.target.value)}
           onKeyPress={handleKeyPress}
           onFocus={onFocus}
-          placeholder="Type your message..."
+          placeholder="Ask anything..."
           rows={1}
           readOnly={false}
           disabled={false}
