@@ -87,3 +87,46 @@
 .messageItem:last-child {
   animation: slideIn 0.3s ease-out;
 }
+
+/* Image styling */
+.imageContainer {
+  margin-bottom: 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.messageImage {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  display: block;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  border-radius: 12px;
+}
+
+.messageImage:hover {
+  transform: scale(1.02);
+}
+
+.userMessage .imageContainer {
+  border: 2px solid rgba(255,255,255,0.3);
+}
+
+.bellaMessage .imageContainer {
+  border: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+/* Mobile image optimizations */
+@media (max-width: 768px) {
+  .messageImage {
+    max-width: 180px;
+  }
+}
+
+@media (max-width: 480px) {
+  .messageImage {
+    max-width: 160px;
+  }
+}

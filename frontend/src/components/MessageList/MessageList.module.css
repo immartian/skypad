@@ -7,6 +7,9 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #c0c0c0 transparent;
+  /* Enhanced scrolling behavior */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .oldMessageList {
@@ -32,19 +35,22 @@
   background: rgba(0,0,0,0.3);
 }
 
+/* Smooth scrolling behavior */
+.messageList {
+  scroll-behavior: smooth;
+}
+
 /* Mobile optimizations */
 @media (max-width: 768px) {
   .messageList {
     padding: 0 4px;
     gap: 6px;
+    /* Enhanced mobile scrolling */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
   
   .oldMessageList {
     padding-bottom: 15px;
   }
-}
-
-/* Smooth scrolling behavior */
-.messageList {
-  scroll-behavior: smooth;
 }

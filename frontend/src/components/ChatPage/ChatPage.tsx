@@ -8,7 +8,8 @@ export interface Message {
   id: string;
   text: string;
   sender: 'user' | 'bella';
-  image?: string; // For future image support
+  image?: string; // Base64 data URL or file path
+  imageFile?: File; // Original file for analysis
 }
 
 const BELLA_EMOJI = '🧘‍♀️'; // Or any other emoji/icon
@@ -18,6 +19,7 @@ const ChatPage: React.FC = () => {
   const [status, setStatus] = useState<string>('Online');
   const [showWorkspace, setShowWorkspace] = useState(false);
   const [isGuest, setIsGuest] = useState(true); // Track authentication state
+  const [isDragging, setIsDragging] = useState(false); // Track drag state
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -39,7 +41,8 @@ const ChatPage: React.FC = () => {
       sender: 'user',
     };
     setMessages((prevMessages) => [...prevMessages, userMessage]);
-    setStatus('Bella is thinking...');
+    console.log('Setting status to: Bella is typing...');
+    setStatus('Bella is typing...');
 
     try {
       // Use relative URL that will work both locally and in Cloud Run
@@ -80,6 +83,108 @@ const ChatPage: React.FC = () => {
       setMessages((prevMessages) => [...prevMessages, errorMessage]);
       setStatus('Error communicating with Bella');
     }
+  };
+
+  // Image handling functions
+  const analyzeImageWithOpenAI = async (imageFile: File): Promise<string> => {
+    try {
+      const base64 = await fileToBase64(imageFile);
+      const response = await fetch('/api/analyze-image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          image: base64,
+          prompt: "Please analyze this image and provide a brief description of its style, colors, and main elements. Focus on design and aesthetic aspects."
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to analyze image');
+      }
+
+      const data = await response.json();
+      return data.analysis || 'Image uploaded successfully.';
+    } catch (error) {
+      console.error('Image analysis error:', error);
+      return 'Image uploaded successfully, but analysis is temporarily unavailable.';
+    }
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file.');
+      return;
+    }
+
+    try {
+      const imageDataUrl = await fileToBase64(file);
+      
+      // Add user message with image
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        text: `[Image uploaded: ${file.name}]`,
+        sender: 'user',
+        image: imageDataUrl,
+        imageFile: file,
+      };
+      setMessages((prevMessages) => [...prevMessages, userMessage]);
+      setStatus('Bella is typing...');
+
+      // Analyze image and get Bella's response
+      const analysis = await analyzeImageWithOpenAI(file);
+      
+      const bellaMessage: Message = {
+        id: Date.now().toString() + '-bella',
+        text: analysis,
+        sender: 'bella',
+      };
+
+      setMessages((prevMessages) => [...prevMessages, bellaMessage]);
+      setStatus('Online');
+    } catch (error) {
+      console.error('Image upload error:', error);
+      setStatus('Error processing image');
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      handleImageUpload(files[0]);
+    }
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleImageUpload(file);
+    }
+    // Reset the input so the same file can be uploaded again
+    e.target.value = '';
   };
 
   const { oldMessages, recentMessages } = useMemo(() => {
@@ -179,7 +284,10 @@ const ChatPage: React.FC = () => {
 
       {/* Main Chat Interface */}
       <div 
-        className={`${styles.chatContainer} ${showWorkspace ? styles.collapsed : ''}`}
+        className={`${styles.chatContainer} ${showWorkspace ? styles.collapsed : ''} ${isDragging ? styles.dragging : ''}`}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
         {/* Bella Avatar - Upper Left with File Tray */}
         <div className={styles.bellaZone} onClick={handleBellaClick}>
@@ -187,10 +295,22 @@ const ChatPage: React.FC = () => {
           <StatusIndicator status={status} />
           
           {/* File Upload Tray - Near Bella */}
-          <div className={styles.fileTray} onClick={(e) => e.stopPropagation()}>
+          <div className={styles.fileTray} onClick={(e) => {
+            e.stopPropagation();
+            // Trigger file input click
+            const fileInput = document.getElementById('imageFileInput') as HTMLInputElement;
+            fileInput?.click();
+          }}>
+            <input
+              id="imageFileInput"
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={handleFileInputChange}
+            />
             <div className={styles.trayContent}>
-              <div className={styles.trayIcon}>📁</div>
-              <span className={styles.trayText}>Files</span>
+              <div className={styles.trayIcon}>🖼️</div>
+              <span className={styles.trayText}>Images</span>
             </div>
           </div>
         </div>

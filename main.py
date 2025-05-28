@@ -135,6 +135,13 @@ class ChatMessage(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
 
+class ImageAnalysisRequest(BaseModel):
+    image: str  # Base64 encoded image
+    prompt: Optional[str] = "Please analyze this image and provide a brief description."
+
+class ImageAnalysisApiResponse(BaseModel):
+    analysis: str
+
 # --- API Endpoints ---
 
 # Serve index.html for the root path
@@ -220,6 +227,53 @@ async def chat_with_bella(chat_message: ChatMessage):
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         raise HTTPException(status_code=500, detail="An unexpected error occurred.")
+
+@app.post("/api/analyze-image", response_model=ImageAnalysisApiResponse)
+async def analyze_image_api(request: ImageAnalysisRequest):
+    if not openai.api_key:
+        raise HTTPException(status_code=500, detail="OpenAI API key not configured.")
+    
+    try:
+        import base64
+        
+        # Extract base64 data from data URL (remove data:image/jpeg;base64, prefix)
+        if request.image.startswith('data:'):
+            base64_data = request.image.split(',')[1]
+        else:
+            base64_data = request.image
+            
+        # Create the OpenAI API request for vision
+        completion = openai.chat.completions.create(
+            model="gpt-4o",  # Use GPT-4o for image analysis
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": request.prompt},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{base64_data}"
+                            }
+                        }
+                    ]
+                }
+            ],
+            max_tokens=300
+        )
+        
+        analysis = completion.choices[0].message.content
+        if analysis is None:
+            raise HTTPException(status_code=500, detail="OpenAI API returned an empty analysis.")
+            
+        return ImageAnalysisApiResponse(analysis=analysis)
+        
+    except openai.APIError as e:
+        print(f"OpenAI API Error: {e}")
+        raise HTTPException(status_code=500, detail=f"An error occurred with the OpenAI API: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred during image analysis: {e}")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred during image analysis.")
 
 # --- Analysis Functions (copied and adapted from app.py) ---
 

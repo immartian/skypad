@@ -98,6 +98,30 @@
   overflow: hidden;
 }
 
+/* Drag and drop visual feedback */
+.chatContainer.dragging {
+  background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%) !important;
+  border: 3px dashed #667eea;
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+}
+
+.chatContainer.dragging::before {
+  content: "📸 Drop image here to upload and analyze";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 18px;
+  color: #667eea;
+  font-weight: 600;
+  text-align: center;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 20px 40px;
+  border-radius: 12px;
+  pointer-events: none;
+}
+
 /* Desktop: Bottom-aligned chat window with consistent round corners */
 @media (min-width: 769px) {
   .chatContainer {
@@ -218,6 +242,7 @@
   background: white;
   min-height: 0; /* Important for flex item to shrink */
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
 /* In workspace mode, messages area should shrink properly */
@@ -229,18 +254,63 @@
 .oldMessagesArea {
   flex: 1;
   overflow-y: auto;
-  opacity: 0.4;
+  opacity: 1;
   transition: opacity 0.3s ease;
   margin-bottom: 20px;
+  position: relative;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+  /* Enhanced scrolling */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.2) transparent;
+}
+
+.oldMessagesArea::-webkit-scrollbar {
+  width: 4px;
+}
+
+.oldMessagesArea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.oldMessagesArea::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 2px;
+}
+
+.oldMessagesArea::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.3);
 }
 
 .oldMessagesArea:hover {
-  opacity: 0.7;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
 }
 
 .recentMessagesArea {
   min-height: 120px;
   opacity: 1;
+  overflow-y: auto;
+  /* Enhanced scrolling for recent messages */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0,0,0,0.2) transparent;
+}
+
+.recentMessagesArea::-webkit-scrollbar {
+  width: 4px;
+}
+
+.recentMessagesArea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.recentMessagesArea::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 2px;
+}
+
+.recentMessagesArea::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.3);
 }
 
 /* === Input Area (Always Visible, Bottom) === */
@@ -307,14 +377,30 @@
     display: none;
   }
   
+  /* Mobile: Full screen chat with no rounded corners */
+  .chatContainer {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: none !important;
+    border-radius: 0 !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  
   .workspaceMode .chatContainer {
-    width: 98vw;
-    left: 1vw;
-    transform: none;
+    width: 100vw !important;
+    left: 0 !important;
+    transform: none !important;
+    border-radius: 0 !important;
   }
   
   .inputArea {
     padding: 12px;
+    border-radius: 0 !important;
   }
   
   .bellaZone {
@@ -325,17 +411,49 @@
   
   .messagesArea {
     padding: 80px 12px 12px 12px;
+    /* Enhanced mobile scrolling */
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .oldMessagesArea {
+    /* Better mobile touch scrolling */
+    -webkit-overflow-scrolling: touch;
+    /* Remove mask on mobile for better performance */
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+  
+  .recentMessagesArea {
+    -webkit-overflow-scrolling: touch;
   }
 }
 
 @media (max-width: 480px) {
+  .chatContainer {
+    width: 100vw !important;
+    left: 0 !important;
+    border-radius: 0 !important;
+  }
+  
   .workspaceMode .chatContainer {
-    width: 100vw;
-    left: 0;
+    width: 100vw !important;
+    left: 0 !important;
+    border-radius: 0 !important;
   }
   
   .inputArea {
     padding: 8px;
+    border-radius: 0 !important;
+  }
+  
+  .bellaZone {
+    top: 8px;
+    left: 8px;
+    padding: 4px 8px;
+  }
+  
+  .messagesArea {
+    padding: 70px 8px 8px 8px;
   }
 }
 

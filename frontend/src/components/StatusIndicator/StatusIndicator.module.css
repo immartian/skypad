@@ -27,6 +27,17 @@
   animation: pulse 1.5s infinite;
 }
 
+.typing .statusDot {
+  background: #17a2b8;
+  animation: typing 1.4s infinite;
+}
+
+.typing .statusText {
+  font-size: 10px;
+  font-style: italic;
+  color: #17a2b8;
+}
+
 .error .statusDot {
   background: #dc3545;
   animation: none;
@@ -40,6 +51,15 @@
   50% {
     opacity: 0.5;
     transform: scale(0.8);
+  }
+}
+
+@keyframes typing {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-4px);
   }
 }
 

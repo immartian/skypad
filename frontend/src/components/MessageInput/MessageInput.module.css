@@ -85,10 +85,12 @@
 @media (max-width: 768px) {
   .inputContainer {
     padding: 10px 14px;
+    border-radius: 12px; /* Less rounded on mobile */
   }
   
   .inputField {
     font-size: 16px; /* Prevent zoom on iOS */
+    border-radius: 8px;
   }
   
   .sendButton {
@@ -96,17 +98,38 @@
     height: 40px;
     font-size: 18px;
   }
+  
+  .collapsedField {
+    border-radius: 8px;
+  }
+  
+  .messageInputForm.collapsed .inputContainer {
+    border-radius: 12px;
+  }
 }
 
 @media (max-width: 480px) {
   .inputContainer {
     padding: 8px 12px;
+    border-radius: 8px; /* Even less rounded on small screens */
+  }
+  
+  .inputField {
+    border-radius: 6px;
   }
   
   .sendButton {
     width: 36px;
     height: 36px;
     font-size: 16px;
+  }
+  
+  .collapsedField {
+    border-radius: 6px;
+  }
+  
+  .messageInputForm.collapsed .inputContainer {
+    border-radius: 8px;
   }
 }
 

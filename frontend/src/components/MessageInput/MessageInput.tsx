@@ -52,7 +52,7 @@ const MessageInput: React.FC<MessageInputProps> = ({ onSendMessage, onFocus }) =
           className={styles.sendButton}
           disabled={!message.trim()}
         >
-          ✈️
+          ↗
         </button>
       </div>
     </form>
