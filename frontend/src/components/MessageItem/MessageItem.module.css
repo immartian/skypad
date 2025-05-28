@@ -1,31 +1,89 @@
+/* MVP3 Modern Chat Bubble Styling */
 .messageItem {
-  padding: 10px 15px;
-  border-radius: 18px; /* Slightly more rounded */
-  max-width: 75%; /* Allow slightly wider messages */
+  padding: 12px 16px;
+  border-radius: 20px;
+  max-width: 80%;
   word-wrap: break-word;
-  transition: opacity 0.5s ease-in-out; /* Smoother dimming */
-  margin-bottom: 8px; /* Add some space between messages */
+  margin-bottom: 8px;
   line-height: 1.4;
+  font-size: 15px;
+  transition: all 0.3s ease;
+  position: relative;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .userMessage {
-  background-color: #007bff; /* Standard blue for user */
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   align-self: flex-end;
-  border-bottom-right-radius: 6px; /* Custom rounding for tail effect */
+  border-bottom-right-radius: 6px;
+  margin-left: auto;
+  margin-right: 8px;
 }
 
 .bellaMessage {
-  background-color: #f0f0f0; /* Lighter grey for Bella */
-  color: #2c2c2c; /* Darker text for better contrast */
+  background: #f8f9fa;
+  color: #495057;
   align-self: flex-start;
-  border-bottom-left-radius: 6px; /* Custom rounding for tail effect */
+  border-bottom-left-radius: 6px;
+  margin-right: auto;
+  margin-left: 8px;
+  border: 1px solid #e9ecef;
 }
 
 .messageItem p {
   margin: 0;
+  font-weight: 400;
 }
 
 .dimmedMessage {
-  opacity: 0.5; /* Slightly more dimmed */
+  opacity: 0.4;
+  transform: scale(0.98);
+  filter: blur(0.5px);
+}
+
+.dimmedMessage:hover {
+  opacity: 0.7;
+  transform: scale(1);
+  filter: none;
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .messageItem {
+    max-width: 85%;
+    padding: 10px 14px;
+    font-size: 16px; /* Prevent iOS zoom */
+  }
+  
+  .userMessage {
+    margin-right: 4px;
+  }
+  
+  .bellaMessage {
+    margin-left: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .messageItem {
+    max-width: 90%;
+    padding: 8px 12px;
+  }
+}
+
+/* Animation for new messages */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.messageItem:last-child {
+  animation: slideIn 0.3s ease-out;
 }

@@ -1,85 +1,342 @@
+/* === MVP3: Mobile-First Chat Platform === */
+
 .chatPage {
+  position: relative;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* === Background Workspace (Desktop Three-Pane Layout) === */
+.backgroundWorkspace {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #f8f9fa;
+  z-index: 1; /* Lower than chat always */
+  opacity: 0.3;
+  pointer-events: all;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.workspaceMode .backgroundWorkspace {
+  z-index: 1; /* Stay lower when in workspace mode */
+}
+
+.workspaceMode .backgroundWorkspace.active {
+  opacity: 1;
+  cursor: default;
+}
+
+.workspaceContent {
+  display: grid;
+  grid-template-columns: 250px 1fr 300px;
+  height: 100%;
+  gap: 1px;
+  background: #dee2e6;
+}
+
+.leftPane, .centerPane, .rightPane {
+  background: white;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.leftPane {
+  border-right: 1px solid #dee2e6;
+}
+
+.rightPane {
+  border-left: 1px solid #dee2e6;
+}
+
+.threadList {
+  margin-top: 20px;
+}
+
+.threadItem {
+  padding: 12px;
+  margin: 8px 0;
+  background: #f8f9fa;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.threadItem:hover {
+  background: #e9ecef;
+}
+
+.placeholderContent, .aiInsights {
+  margin-top: 20px;
+}
+
+.contentBlock, .insightItem {
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin: 12px 0;
+}
+
+/* === Main Chat Container === */
+.chatContainer {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  background: white !important;
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Full viewport height */
-  max-width: 700px; /* Slightly reduced max-width */
-  margin: 0 auto;
-  border: 1px solid #e0e0e0; /* Lighter border */
-  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08); /* Softer shadow */
-  background-color: #ffffff; /* Cleaner white background */
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Modern font stack */
+  z-index: 10;
+  border-radius: 20px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 1;
+  overflow: hidden;
 }
 
-.oldMessagesArea {
-  flex-grow: 1; /* Takes up available space */
-  overflow-y: auto; /* Allows scrolling for old messages */
-  padding: 20px 20px 10px 20px;
+/* Desktop: Bottom-aligned chat window with consistent round corners */
+@media (min-width: 769px) {
+  .chatContainer {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 70vh;
+    max-height: 600px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  }
+}
+
+/* === Workspace Mode: Chat becomes bottom strip === */
+.workspaceMode .chatContainer {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  width: 500px;
+  max-width: 95vw;
+  height: 400px;
+  transform: translateX(-50%);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 15;
   display: flex;
-  flex-direction: column-reverse; /* Newest old messages at the bottom of this container */
-  border-bottom: 1px solid #f0f0f0; /* Lighter separator */
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
-/* Custom scrollbar for webkit browsers */
-.oldMessagesArea::-webkit-scrollbar {
-  width: 8px;
+.workspaceMode .chatContainer.collapsed {
+  height: 80px;
 }
 
-.oldMessagesArea::-webkit-scrollbar-track {
-  background: #f9f9f9;
+.workspaceMode .chatContainer.collapsed .bellaZone,
+.workspaceMode .chatContainer.collapsed .messagesArea {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
 }
 
-.oldMessagesArea::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 4px;
-}
-
-.oldMessagesArea::-webkit-scrollbar-thumb:hover {
-  background: #bbb;
-}
-
-
+/* === Bella Zone (Upper-Left, Not Center) === */
 .bellaZone {
-  padding: 25px 20px; /* Increased padding */
-  text-align: center;
-  border-bottom: 1px solid #f0f0f0; /* Lighter separator */
-  background-color: #f9f9f9; /* Light grey for Bella's zone */
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
-  /* position: sticky; top: 0; z-index: 10; // Removed sticky as it can be complex with flex */
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 15;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 8px 16px;
+  border-radius: 25px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bellaZone:hover {
+  background: #fff;
+  transform: scale(1.02);
 }
 
 .bellaAvatar {
-  font-size: 3.5em; /* Slightly larger emoji */
-  margin-bottom: 8px; /* Reduced margin */
-  line-height: 1; /* Ensure emoji aligns well */
+  font-size: 32px;
+  line-height: 1;
 }
 
-.currentInteractionArea {
-  padding: 15px 20px 20px 20px; /* Adjusted padding */
-  background-color: #ffffff;
-  box-shadow: 0 -1px 3px rgba(0,0,0,0.03); /* Subtle shadow for separation */
+/* === File Upload Tray (Near Bella) === */
+.fileTray {
+  width: 60px;
+  height: 40px;
+  background: rgba(240, 248, 255, 0.9);
+  border: 1px dashed #007acc;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 8px;
 }
 
-/* MessageList within currentInteractionArea */
-.currentInteractionArea .messageList {
-  max-height: 180px; /* Allow a bit more space for recent messages */
-  overflow-y: auto; /* Allow scroll if more than 1-2 messages make it too tall */
-  margin-bottom: 15px; /* Space before input */
+.fileTray:hover {
+  background: rgba(240, 248, 255, 1);
+  border-color: #0056b3;
+  transform: scale(1.05);
 }
 
-/* Custom scrollbar for recent messages as well */
-.currentInteractionArea .messageList::-webkit-scrollbar {
-  width: 8px;
+.trayContent {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
 }
 
-.currentInteractionArea .messageList::-webkit-scrollbar-track {
-  background: #f9f9f9;
+.trayIcon {
+  font-size: 16px;
+  line-height: 1;
 }
 
-.currentInteractionArea .messageList::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 4px;
+.trayText {
+  font-size: 10px;
+  color: #007acc;
+  font-weight: 500;
 }
 
-.currentInteractionArea .messageList::-webkit-scrollbar-thumb:hover {
-  background: #bbb;
+/* === Messages Area === */
+.messagesArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 100px 20px 20px 20px;
+  overflow: hidden;
+  background: white;
+  min-height: 0; /* Important for flex item to shrink */
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* In workspace mode, messages area should shrink properly */
+.workspaceMode .messagesArea {
+  flex: 1;
+  min-height: 0;
+}
+
+.oldMessagesArea {
+  flex: 1;
+  overflow-y: auto;
+  opacity: 0.4;
+  transition: opacity 0.3s ease;
+  margin-bottom: 20px;
+}
+
+.oldMessagesArea:hover {
+  opacity: 0.7;
+}
+
+.recentMessagesArea {
+  min-height: 120px;
+  opacity: 1;
+}
+
+/* === Input Area (Always Visible, Bottom) === */
+.inputArea {
+  position: relative;
+  padding: 20px;
+  background: #fff;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 15;
+  min-height: 60px;
+  flex-shrink: 0; /* Prevent input from shrinking */
+  transition: none;
+}
+
+/* Workspace collapsed: Input maintains consistent appearance */
+.workspaceMode .chatContainer.collapsed .inputArea {
+  border-top: none;
+  border-radius: 20px;
+  cursor: pointer;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.workspaceMode .chatContainer.collapsed .inputArea:hover {
+  background: #f8f9fa;
+}
+
+/* === User Icon (Bottom-Right) === */
+.userIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #6c757d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.userIcon:hover {
+  transform: scale(1.1);
+  background: #495057;
+}
+
+.guestIcon {
+  background: #fd7e14;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* === Mobile Responsive === */
+@media (max-width: 768px) {
+  .backgroundWorkspace {
+    display: none;
+  }
+  
+  .workspaceMode .chatContainer {
+    width: 98vw;
+    left: 1vw;
+    transform: none;
+  }
+  
+  .inputArea {
+    padding: 12px;
+  }
+  
+  .bellaZone {
+    top: 12px;
+    left: 12px;
+    padding: 6px 12px;
+  }
+  
+  .messagesArea {
+    padding: 80px 12px 12px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .workspaceMode .chatContainer {
+    width: 100vw;
+    left: 0;
+  }
+  
+  .inputArea {
+    padding: 8px;
+  }
+}
+
+

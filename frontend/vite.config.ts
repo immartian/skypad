@@ -10,5 +10,27 @@ export default defineConfig({
     assetsDir: 'assets',
     // Generate sourcemaps for better debugging
     sourcemap: true,
+  },
+  server: {
+    // Enable host binding for Docker
+    host: '0.0.0.0',
+    port: 5173,
+    // Enable hot reload in Docker
+    watch: {
+      usePolling: true,
+    },
+    // Proxy API requests to backend during development
+    proxy: {
+      '/api': {
+        target: process.env.VITE_API_BASE_URL || 'http://backend:8080',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/chat': {
+        target: process.env.VITE_API_BASE_URL || 'http://backend:8080',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   }
 })

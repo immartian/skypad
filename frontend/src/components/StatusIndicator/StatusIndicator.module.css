@@ -1,9 +1,57 @@
+/* MVP3 Modern Status Indicator */
 .statusIndicator {
-  font-size: 0.95em; /* Slightly larger */
-  color: #484848; /* Darker grey for better readability */
-  padding-top: 5px; /* Add a little space above the status text */
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #28a745;
+  transition: all 0.3s ease;
 }
 
 .statusText {
-  font-weight: 500; /* Medium weight */
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+/* Status-specific styling */
+.thinking .statusDot {
+  background: #ffc107;
+  animation: pulse 1.5s infinite;
+}
+
+.error .statusDot {
+  background: #dc3545;
+  animation: none;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .statusIndicator {
+    font-size: 11px;
+    gap: 4px;
+  }
+  
+  .statusDot {
+    width: 6px;
+    height: 6px;
+  }
 }
