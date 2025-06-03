@@ -432,4 +432,6 @@ if __name__ == "__main__":
                 f.write("<html><body><h1>FastAPI Backend Running</h1><p>React frontend should replace this.</p></body></html>")
     
     # app.mount("/static", StaticFiles(directory="static"), name="static") # Mount after all routes are defined
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    # Use PORT environment variable if available (for Cloud Run), otherwise default to 8000 for local dev
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

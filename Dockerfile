@@ -43,6 +43,9 @@ COPY sage-striker-294302-b248a695e8e5.json /app/google-credentials.json
 # Copy the backend application code
 COPY main.py bella_prompt.py utils.py ./ 
 
+# Copy the lattice directory (required by main.py)
+COPY lattice/ ./lattice/
+
 # Copy built frontend assets from the frontend-builder stage
 COPY --from=frontend-builder /app/dist /app/static
 
@@ -71,5 +74,5 @@ ENV GOOGLE_APPLICATION_CREDENTIALS=/app/google-credentials.json
 # Expose port 8080 - Cloud Run will set PORT env var automatically
 EXPOSE 8080
 
-# Command to run the application - use PORT env var which will be set by Cloud Run
-CMD uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}
+# Command to run the application - using python directly since uvicorn command had issues
+CMD python3 main.py
