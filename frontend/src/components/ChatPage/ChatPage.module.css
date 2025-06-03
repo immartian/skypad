@@ -45,6 +45,20 @@
   background: white;
   padding: 20px;
   overflow-y: auto;
+  position: relative;
+}
+
+.fullVisualizationContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
 }
 
 .leftPane {
@@ -88,7 +102,7 @@
   position: relative;
   width: 100%;
   height: 100vh;
-  background: white !important;
+  background: rgba(255, 255, 255, 0.90) !important; /* More opaque when visualization isn't active */
   display: flex;
   flex-direction: column;
   z-index: 10;
@@ -96,6 +110,12 @@
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   opacity: 1;
   overflow: hidden;
+  backdrop-filter: blur(5px);
+}
+
+/* Make chat more transparent when visualization is active */
+.workspaceMode .chatContainer {
+  background: rgba(255, 255, 255, 0.80) !important;
 }
 
 /* Drag and drop visual feedback */

@@ -19,15 +19,10 @@ export default defineConfig({
     watch: {
       usePolling: true,
     },
-    // Proxy API requests to backend during development
+    // Proxy API calls to backend during development
     proxy: {
       '/api': {
-        target: process.env.VITE_API_BASE_URL || 'http://backend:8080',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/chat': {
-        target: process.env.VITE_API_BASE_URL || 'http://backend:8080',
+        target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
       }

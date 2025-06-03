@@ -5,3 +5,4 @@ use_cases.md
 images/
 .venv_skypad/
 __pycache__/
+.venv

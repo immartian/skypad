@@ -85,6 +85,9 @@ app.add_middleware(
 # in your Dockerfile or build process.
 app.mount("/static", StaticFiles(directory="static", html=True), name="static_assets")
 
+# Mount the lattice directory to serve ontology files
+app.mount("/lattice", StaticFiles(directory="lattice"), name="lattice_assets")
+
 # --- Helper functions (copied and adapted from app.py) ---
 def get_api_key(service_name: str) -> Optional[str]:
     """Get API key from environment variables or return None"""
@@ -131,6 +134,7 @@ class BellaChatResponse(BaseModel):
 
 class ChatMessage(BaseModel):
     message: str
+    focused_entities: Optional[List[str]] = []
 
 class ChatResponse(BaseModel):
     reply: str
@@ -206,13 +210,19 @@ async def chat_with_bella(chat_message: ChatMessage):
     if not openai.api_key:
         raise HTTPException(status_code=500, detail="OpenAI API key not configured.")
     try:
+        # Enhance the user message with ontology context if entities are focused
+        enhanced_message = chat_message.message
+        if chat_message.focused_entities:
+            context_info = f"\n\nContext: The user is currently focusing on these ontology entities: {', '.join(chat_message.focused_entities)}. Please acknowledge these entities and provide relevant information about them and their relationships."
+            enhanced_message += context_info
+
         # For simplicity, we are not maintaining conversation history here yet.
         # In a more advanced setup, you would manage a list of messages (system, user, assistant).
         completion = openai.chat.completions.create(
             model="gpt-3.5-turbo",  # Or your preferred model, e.g., "gpt-4"
             messages=[
                 {"role": "system", "content": BELLA_SYSTEM_PROMPT},
-                {"role": "user", "content": chat_message.message}
+                {"role": "user", "content": enhanced_message}
             ]
         )
         # Correct way to access the message content from the response

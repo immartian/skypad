@@ -1,0 +1,432 @@
+[
+  {
+    "@id": "http://skypad.ai/ontology#TeamMember",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#CHILDesign",
+    "@type": [
+      "http://skypad.ai/ontology#Designer"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#hasFurnitureItem",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#ObjectProperty"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#domain": [
+      {
+        "@id": "http://skypad.ai/ontology#Project"
+      }
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#range": [
+      {
+        "@id": "http://skypad.ai/ontology#FurnitureItem"
+      }
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#Project",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#FunctionalUseClass",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#hasFunction",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#ObjectProperty"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#domain": [
+      {
+        "@id": "http://skypad.ai/ontology#FurnitureItem"
+      }
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#range": [
+      {
+        "@id": "http://skypad.ai/ontology#FunctionalUseClass"
+      }
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#UrbanHotel",
+    "@type": [
+      "http://skypad.ai/ontology#ProjectSiteNature"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#hasPurchasingAgent",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#ObjectProperty"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#domain": [
+      {
+        "@id": "http://skypad.ai/ontology#Project"
+      }
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#range": [
+      {
+        "@id": "http://skypad.ai/ontology#PurchasingAgent"
+      }
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#FurnitureItem",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#DesignStyle",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#taggedWith",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#ObjectProperty"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#domain": [
+      {
+        "@id": "http://skypad.ai/ontology#ImageAsset"
+      }
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#range": [
+      {
+        "@id": "http://skypad.ai/ontology#DesignStyle"
+      }
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#TheDorian",
+    "@type": [
+      "http://skypad.ai/ontology#Project"
+    ],
+    "http://skypad.ai/ontology#hasDesigner": [
+      {
+        "@id": "http://skypad.ai/ontology#CHILDesign"
+      }
+    ],
+    "http://skypad.ai/ontology#hasFurnitureItem": [
+      {
+        "@id": "http://skypad.ai/ontology#Bedframe_123"
+      }
+    ],
+    "http://skypad.ai/ontology#hasPurchasingAgent": [
+      {
+        "@id": "http://skypad.ai/ontology#ConcordHospitality"
+      }
+    ],
+    "http://skypad.ai/ontology#hasSiteNature": [
+      {
+        "@id": "http://skypad.ai/ontology#UrbanHotel"
+      }
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#Sleep",
+    "@type": [
+      "http://skypad.ai/ontology#FunctionalUseClass"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#hasDesigner",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#ObjectProperty"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#domain": [
+      {
+        "@id": "http://skypad.ai/ontology#Project"
+      }
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#range": [
+      {
+        "@id": "http://skypad.ai/ontology#Designer"
+      }
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#usesAIModel",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#ObjectProperty"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#domain": [
+      {
+        "@id": "http://skypad.ai/ontology#AIModule"
+      }
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#range": [
+      {
+        "@id": "http://skypad.ai/ontology#REAgent"
+      }
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#submittedBy",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#ObjectProperty"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#domain": [
+      {
+        "@id": "http://skypad.ai/ontology#DesignDocument"
+      }
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#range": [
+      {
+        "@id": "http://skypad.ai/ontology#Designer"
+      }
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#ProjectSiteNature",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#linkedToProject",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#ObjectProperty"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#domain": [
+      {
+        "@id": "http://skypad.ai/ontology#ImageAsset"
+      }
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#range": [
+      {
+        "@id": "http://skypad.ai/ontology#Project"
+      }
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#hasBiddingDocument",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#ObjectProperty"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#domain": [
+      {
+        "@id": "http://skypad.ai/ontology#Project"
+      }
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#range": [
+      {
+        "@id": "http://skypad.ai/ontology#BiddingDocument"
+      }
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#hasDeal",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#ObjectProperty"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#domain": [
+      {
+        "@id": "http://skypad.ai/ontology#Project"
+      }
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#range": [
+      {
+        "@id": "http://skypad.ai/ontology#Deal"
+      }
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#hasClient",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#ObjectProperty"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#domain": [
+      {
+        "@id": "http://skypad.ai/ontology#Project"
+      }
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#range": [
+      {
+        "@id": "http://skypad.ai/ontology#Client"
+      }
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#REAgent",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#BiddingDocument",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#hasDesignStyle",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#ObjectProperty"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#domain": [
+      {
+        "@id": "http://skypad.ai/ontology#Project"
+      }
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#range": [
+      {
+        "@id": "http://skypad.ai/ontology#DesignStyle"
+      }
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#ImageAsset",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#hasSiteNature",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#ObjectProperty"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#domain": [
+      {
+        "@id": "http://skypad.ai/ontology#Project"
+      }
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#range": [
+      {
+        "@id": "http://skypad.ai/ontology#ProjectSiteNature"
+      }
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#DesignDocument",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#Deal",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Ontology"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#ConcordHospitality",
+    "@type": [
+      "http://skypad.ai/ontology#PurchasingAgent"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#RoomType",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#PurchasingAgent",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#handledBy",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#ObjectProperty"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#domain": [
+      {
+        "@id": "http://skypad.ai/ontology#BiddingDocument"
+      }
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#range": [
+      {
+        "@id": "http://skypad.ai/ontology#TeamMember"
+      }
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#isUsedInRoom",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#ObjectProperty"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#domain": [
+      {
+        "@id": "http://skypad.ai/ontology#FurnitureItem"
+      }
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#range": [
+      {
+        "@id": "http://skypad.ai/ontology#RoomType"
+      }
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#GuestRoom",
+    "@type": [
+      "http://skypad.ai/ontology#RoomType"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#Designer",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#Client",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#hasDesignDocument",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#ObjectProperty"
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#domain": [
+      {
+        "@id": "http://skypad.ai/ontology#Project"
+      }
+    ],
+    "http://www.w3.org/2000/01/rdf-schema#range": [
+      {
+        "@id": "http://skypad.ai/ontology#DesignDocument"
+      }
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#AIModule",
+    "@type": [
+      "http://www.w3.org/2002/07/owl#Class"
+    ]
+  },
+  {
+    "@id": "http://skypad.ai/ontology#Bedframe_123",
+    "@type": [
+      "http://skypad.ai/ontology#FurnitureItem"
+    ],
+    "http://skypad.ai/ontology#hasFunction": [
+      {
+        "@id": "http://skypad.ai/ontology#Sleep"
+      }
+    ],
+    "http://skypad.ai/ontology#isUsedInRoom": [
+      {
+        "@id": "http://skypad.ai/ontology#GuestRoom"
+      }
+    ]
+  }
+]

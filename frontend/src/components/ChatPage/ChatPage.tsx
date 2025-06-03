@@ -3,6 +3,7 @@ import styles from './ChatPage.module.css';
 import StatusIndicator from '../StatusIndicator/StatusIndicator';
 import MessageList from '../MessageList/MessageList';
 import MessageInput from '../MessageInput/MessageInput';
+import OntologyVisualization from '../OntologyVisualization/OntologyVisualization';
 
 export interface Message {
   id: string;
@@ -17,9 +18,10 @@ const BELLA_EMOJI = '🧘‍♀️'; // Or any other emoji/icon
 const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<string>('Online');
-  const [showWorkspace, setShowWorkspace] = useState(false);
+  const [showWorkspace, setShowWorkspace] = useState(false); // Start with visualization hidden
   const [isGuest, setIsGuest] = useState(true); // Track authentication state
   const [isDragging, setIsDragging] = useState(false); // Track drag state
+  const [focusedEntities, setFocusedEntities] = useState<string[]>([]); // Track ontology focus
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -30,9 +32,14 @@ const ChatPage: React.FC = () => {
   }, []); // Removed messages from dependency array to avoid re-triggering
 
   const handleSendMessage = async (text: string) => {
-    // If chat is collapsed, expand it first
-    if (showWorkspace) {
-      setShowWorkspace(false);
+    // Extract entities from user message and update focus
+    const entities = extractEntitiesFromText(text);
+    if (entities.length > 0) {
+      setFocusedEntities(entities);
+      // Show visualization when entities are detected
+      if (!showWorkspace) {
+        setShowWorkspace(true);
+      }
     }
 
     const userMessage: Message = {
@@ -49,7 +56,10 @@ const ChatPage: React.FC = () => {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ 
+          message: text,
+          focused_entities: entities // Send focused entities to backend
+        }),
       });
 
       if (!response.ok) {
@@ -64,6 +74,17 @@ const ChatPage: React.FC = () => {
       }
 
       const data = await response.json();
+      
+      // Extract entities from Bella's response too
+      const bellaEntities = extractEntitiesFromText(data.reply);
+      if (bellaEntities.length > 0) {
+        setFocusedEntities(prev => [...new Set([...prev, ...bellaEntities])]);
+        // Show visualization when Bella mentions entities
+        if (!showWorkspace) {
+          setShowWorkspace(true);
+        }
+      }
+
       const bellaMessage: Message = {
         id: Date.now().toString() + '-bella',
         text: data.reply,
@@ -215,10 +236,7 @@ const ChatPage: React.FC = () => {
   };
 
   const handleInputFocus = () => {
-    // Expand chat when user focuses on input while collapsed
-    if (showWorkspace) {
-      setShowWorkspace(false);
-    }
+    // Keep visualization visible in the background - no need to change states
   };
 
   const handleUserIconClick = () => {
@@ -230,6 +248,39 @@ const ChatPage: React.FC = () => {
       // Show user profile/settings
       alert('User profile/settings would open here');
     }
+  };
+
+  // Entity extraction function
+  const extractEntitiesFromText = (text: string): string[] => {
+    // Known entities from our ontology
+    const knownEntities = [
+      'TheDorian', 'CHILDesign', 'ConcordHospitality', 'Bedframe_123', 
+      'UrbanHotel', 'GuestRoom', 'Sleep', 'Project', 'Designer', 
+      'FurnitureItem', 'Client', 'PurchasingAgent',
+      // Add common terms that would indicate ontology discussion
+      'ontology', 'entity', 'relationship', 'knowledge graph'
+    ];
+    
+    const foundEntities: string[] = [];
+    const textLower = text.toLowerCase();
+    
+    knownEntities.forEach(entity => {
+      const entityLower = entity.toLowerCase();
+      // Check for exact match
+      if (textLower.includes(entityLower)) {
+        foundEntities.push(entity);
+      }
+      // Check for camelCase or PascalCase converted to spaces
+      else if (textLower.includes(entityLower.replace(/([A-Z])/g, ' $1').trim())) {
+        foundEntities.push(entity);
+      }
+      // Check for snake_case converted to spaces
+      else if (entityLower.includes('_') && textLower.includes(entityLower.replace(/_/g, ' '))) {
+        foundEntities.push(entity);
+      }
+    });
+    
+    return foundEntities;
   };
 
   return (
@@ -259,16 +310,32 @@ const ChatPage: React.FC = () => {
             </div>
           </div>
           <div className={styles.centerPane}>
-            <h3>Thread Content</h3>
-            <p>Click a thread to view discussions and AI insights...</p>
-            <div className={styles.placeholderContent}>
-              <div className={styles.contentBlock}>
-                <h4>Recent Activity</h4>
-                <p>• New design concepts uploaded</p>
-                <p>• Vendor quotes received</p>
-                <p>• Marketing campaign ideas</p>
+            {showWorkspace ? (
+              <div className={styles.fullVisualizationContainer}>
+                <OntologyVisualization 
+                  focusedEntities={focusedEntities}
+                  onNodeClick={(node) => {
+                    // When user clicks a node, add it to chat context
+                    const entityName = node.name;
+                    const contextMessage = `Tell me about ${entityName}`;
+                    handleSendMessage(contextMessage);
+                  }}
+                />
               </div>
-            </div>
+            ) : (
+              <>
+                <h3>Skypad Ontology Visualization</h3>
+                <p>Mention entities like "Project", "Designer", "FurnitureItem" in your chat to see related visualizations.</p>
+                <div className={styles.placeholderContent}>
+                  <div className={styles.contentBlock}>
+                    <h4>Available Entity Types</h4>
+                    <p>• Projects & Design Work</p>
+                    <p>• Furniture Items & Categories</p>
+                    <p>• Clients & Relationships</p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
           <div className={styles.rightPane}>
             <h3>Context & AI</h3>
@@ -290,9 +357,10 @@ const ChatPage: React.FC = () => {
         onDrop={handleDrop}
       >
         {/* Bella Avatar - Upper Left with File Tray */}
-        <div className={styles.bellaZone} onClick={handleBellaClick}>
-          <div className={styles.bellaAvatar}>{BELLA_EMOJI}</div>
+        <div className={styles.bellaZone}>
+          <div className={styles.bellaAvatar} onClick={handleBellaClick}>{BELLA_EMOJI}</div>
           <StatusIndicator status={status} />
+          {/* Removed the visualization toggle button to keep UI minimal */}
           
           {/* File Upload Tray - Near Bella */}
           <div className={styles.fileTray} onClick={(e) => {
