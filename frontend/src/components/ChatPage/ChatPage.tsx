@@ -18,10 +18,12 @@ const BELLA_EMOJI = '🧘‍♀️'; // Or any other emoji/icon
 const ChatPage: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [status, setStatus] = useState<string>('Online');
-  const [showWorkspace, setShowWorkspace] = useState(false); // Start with visualization hidden
+  const [showWorkspace, setShowWorkspace] = useState(window.innerWidth >= 768); // Desktop: true, Mobile: false
   const [isGuest, setIsGuest] = useState(true); // Track authentication state
   const [isDragging, setIsDragging] = useState(false); // Track drag state
   const [focusedEntities, setFocusedEntities] = useState<string[]>([]); // Track ontology focus
+  const [rightPaneWidth, setRightPaneWidth] = useState(400); // Initial width in pixels
+  const [isResizing, setIsResizing] = useState(false);
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -36,8 +38,8 @@ const ChatPage: React.FC = () => {
     const entities = extractEntitiesFromText(text);
     if (entities.length > 0) {
       setFocusedEntities(entities);
-      // Show visualization when entities are detected
-      if (!showWorkspace) {
+      // Show visualization when entities are detected (desktop only)
+      if (!showWorkspace && window.innerWidth >= 768) {
         setShowWorkspace(true);
       }
     }
@@ -79,8 +81,8 @@ const ChatPage: React.FC = () => {
       const bellaEntities = extractEntitiesFromText(data.reply);
       if (bellaEntities.length > 0) {
         setFocusedEntities(prev => [...new Set([...prev, ...bellaEntities])]);
-        // Show visualization when Bella mentions entities
-        if (!showWorkspace) {
+        // Show visualization when Bella mentions entities (desktop only)
+        if (!showWorkspace && window.innerWidth >= 768) {
           setShowWorkspace(true);
         }
       }
@@ -220,18 +222,17 @@ const ChatPage: React.FC = () => {
   }, [messages]);
 
   const handleBackgroundClick = () => {
-    console.log('Background clicked!', { showWorkspace, innerWidth: window.innerWidth });
-    // Only activate workspace if clicked on background workspace area and desktop
-    if (window.innerWidth >= 768 && !showWorkspace) {
-      console.log('Activating workspace mode...');
-      setShowWorkspace(true);
+    // Desktop: workspace is always visible, no click handling needed
+    // Mobile: keep existing behavior if needed
+    if (window.innerWidth < 768) {
+      console.log('Mobile background clicked');
     }
   };
 
   const handleBellaClick = () => {
-    // Bella click toggles workspace mode (collapses chat to show workspace)
-    if (!showWorkspace) {
-      setShowWorkspace(true);
+    // Mobile only: toggle workspace mode
+    if (window.innerWidth < 768) {
+      setShowWorkspace(!showWorkspace);
     }
   };
 
@@ -283,21 +284,71 @@ const ChatPage: React.FC = () => {
     return foundEntities;
   };
 
+  // Resize handling functions
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsResizing(true);
+    e.preventDefault();
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isResizing) return;
+    
+    const minRightWidth = 300;
+    const maxRightWidth = 600;
+    
+    const newRightWidth = window.innerWidth - e.clientX;
+    const clampedWidth = Math.max(minRightWidth, Math.min(maxRightWidth, newRightWidth));
+    
+    setRightPaneWidth(clampedWidth);
+  };
+
+  const handleMouseUp = () => {
+    setIsResizing(false);
+  };
+
+  useEffect(() => {
+    if (isResizing) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isResizing]);
+
+  // Handle window resize to adjust workspace visibility
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setShowWorkspace(true); // Always show workspace on desktop
+      } else {
+        setShowWorkspace(false); // Default to chat on mobile
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <div className={`${styles.chatPage} ${showWorkspace ? styles.workspaceMode : ''}`}>
       {/* Background Workspace - Always visible, dimmed when inactive */}
       <div 
-        className={`${styles.backgroundWorkspace} ${showWorkspace ? styles.active : styles.dimmed}`}
+        className={`${styles.backgroundWorkspace} ${showWorkspace ? styles.active : styles.dimmed} ${isDragging ? styles.dragging : ''}`}
         onClick={handleBackgroundClick}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
       >
-        <div className={styles.workspaceContent} onClick={(e) => {
-          e.stopPropagation();
-          // Also allow clicking on workspace content to activate workspace mode
-          if (!showWorkspace && window.innerWidth >= 768) {
-            console.log('Workspace content clicked, activating workspace...');
-            setShowWorkspace(true);
-          }
-        }}>
+        <div 
+          className={`${styles.workspaceContent} ${isResizing ? styles.resizing : ''}`}
+          style={{ gridTemplateColumns: `250px 1fr 4px ${rightPaneWidth}px` }}
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
           <div className={styles.leftPane}>
             <h3>RE Skypad</h3>
             <div className={styles.threadList}>
@@ -337,21 +388,80 @@ const ChatPage: React.FC = () => {
               </>
             )}
           </div>
+          <div 
+            className={styles.resizeHandle}
+            onMouseDown={handleMouseDown}
+          ></div>
           <div className={styles.rightPane}>
-            <h3>Context & AI</h3>
-            <p>AI insights and related resources appear here</p>
-            <div className={styles.aiInsights}>
-              <div className={styles.insightItem}>🤖 Bella's Analysis</div>
-              <div className={styles.insightItem}>📎 Related Files</div>
-              <div className={styles.insightItem}>🔗 Quick Actions</div>
+            {/* Chat will be moved here for desktop */}
+            <div className={styles.desktopChatContainer}>
+              <div className={styles.chatHeader}>
+                <div className={styles.bellaZone}>
+                  <div className={styles.bellaAvatar} onClick={handleBellaClick}>{BELLA_EMOJI}</div>
+                  <StatusIndicator status={status} />
+                  <div className={styles.fileTray} onClick={(e) => {
+                    e.stopPropagation();
+                    const fileInput = document.getElementById('imageFileInput') as HTMLInputElement;
+                    fileInput?.click();
+                  }}>
+                    <input
+                      id="imageFileInput"
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={handleFileInputChange}
+                    />
+                    <div className={styles.trayContent}>
+                      <div className={styles.trayIcon}>🖼️</div>
+                      <span className={styles.trayText}>Images</span>
+                    </div>
+                  </div>
+                </div>
+                <div 
+                  className={`${styles.userIcon} ${isGuest ? styles.guestIcon : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleUserIconClick();
+                  }}
+                  title={isGuest ? "Click to sign in" : "User profile"}
+                >
+                  {isGuest ? '👤' : '👨‍💼'}
+                </div>
+              </div>
+              
+              <div className={styles.desktopMessagesArea}>
+                <div className={styles.oldMessagesArea}>
+                  <MessageList messages={oldMessages} isOldMessages={true} />
+                </div>
+                <div className={styles.recentMessagesArea}>
+                  <MessageList messages={recentMessages} />
+                </div>
+              </div>
+              
+              <div className={styles.desktopInputArea}>
+                <MessageInput 
+                  onSendMessage={handleSendMessage} 
+                  onFocus={handleInputFocus}
+                />
+                <div 
+                  className={`${styles.userIcon} ${isGuest ? styles.guestIcon : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleUserIconClick();
+                  }}
+                  title={isGuest ? "Click to sign in" : "User profile"}
+                >
+                  {isGuest ? '👤' : '👨‍💼'}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Chat Interface */}
+      {/* Mobile Chat Interface - Only visible on mobile */}
       <div 
-        className={`${styles.chatContainer} ${showWorkspace ? styles.collapsed : ''} ${isDragging ? styles.dragging : ''}`}
+        className={`${styles.mobileChat} ${showWorkspace ? styles.collapsed : ''} ${isDragging ? styles.dragging : ''}`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
@@ -360,17 +470,16 @@ const ChatPage: React.FC = () => {
         <div className={styles.bellaZone}>
           <div className={styles.bellaAvatar} onClick={handleBellaClick}>{BELLA_EMOJI}</div>
           <StatusIndicator status={status} />
-          {/* Removed the visualization toggle button to keep UI minimal */}
           
           {/* File Upload Tray - Near Bella */}
           <div className={styles.fileTray} onClick={(e) => {
             e.stopPropagation();
             // Trigger file input click
-            const fileInput = document.getElementById('imageFileInput') as HTMLInputElement;
+            const fileInput = document.getElementById('mobileImageFileInput') as HTMLInputElement;
             fileInput?.click();
           }}>
             <input
-              id="imageFileInput"
+              id="mobileImageFileInput"
               type="file"
               accept="image/*"
               style={{ display: 'none' }}
@@ -383,7 +492,7 @@ const ChatPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Messages Area - Hidden when collapsed */}
+        {/* Messages Area */}
         <div className={styles.messagesArea}>
           {/* Dimmed old messages */}
           <div className={styles.oldMessagesArea}>
@@ -396,13 +505,13 @@ const ChatPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Input Area with User Icon - Always visible */}
+        {/* Input Area with User Icon */}
         <div 
           className={styles.inputArea}
           onClick={(e) => {
             e.stopPropagation();
-            // Expand chat when clicking the input area if collapsed
-            if (showWorkspace) {
+            // Mobile: Expand chat when clicking the input area if collapsed
+            if (showWorkspace && window.innerWidth < 768) {
               setShowWorkspace(false);
             }
           }}

@@ -35,9 +35,9 @@
 
 .workspaceContent {
   display: grid;
-  grid-template-columns: 250px 1fr 300px;
+  grid-template-columns: 250px 1fr 4px 400px;
   height: 100%;
-  gap: 1px;
+  gap: 0;
   background: #dee2e6;
 }
 
@@ -46,6 +46,32 @@
   padding: 20px;
   overflow-y: auto;
   position: relative;
+}
+
+.resizeHandle {
+  background: #dee2e6;
+  cursor: col-resize;
+  width: 4px;
+  height: 100%;
+  position: relative;
+  transition: background-color 0.2s ease;
+}
+
+.resizeHandle:hover {
+  background: #adb5bd;
+}
+
+.resizeHandle:active {
+  background: #6c757d;
+}
+
+.workspaceContent.resizing {
+  user-select: none;
+  cursor: col-resize;
+}
+
+.workspaceContent.resizing * {
+  pointer-events: none;
 }
 
 .fullVisualizationContainer {
@@ -67,6 +93,9 @@
 
 .rightPane {
   border-left: 1px solid #dee2e6;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .threadList {
@@ -97,8 +126,45 @@
   margin: 12px 0;
 }
 
-/* === Main Chat Container === */
-.chatContainer {
+/* === Desktop Chat Container (in right pane) === */
+.desktopChatContainer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.chatHeader {
+  padding: 12px;
+  border-bottom: 1px solid #e9ecef;
+  background: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.desktopMessagesArea {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 12px;
+}
+
+.desktopInputArea {
+  padding: 12px;
+  border-top: 1px solid #e9ecef;
+  background: #f8f9fa;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* === Mobile Chat Container === */
+.mobileChat {
   position: relative;
   width: 100%;
   height: 100vh;
@@ -113,19 +179,44 @@
   backdrop-filter: blur(5px);
 }
 
-/* Make chat more transparent when visualization is active */
-.workspaceMode .chatContainer {
-  background: rgba(255, 255, 255, 0.80) !important;
+/* Make mobile chat more transparent when visualization is active */
+@media (max-width: 768px) {
+  .workspaceMode .mobileChat {
+    background: rgba(255, 255, 255, 0.80) !important;
+  }
 }
 
 /* Drag and drop visual feedback */
-.chatContainer.dragging {
+.mobileChat.dragging {
   background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%) !important;
   border: 3px dashed #667eea;
   box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
 }
 
-.chatContainer.dragging::before {
+.backgroundWorkspace.dragging {
+  background: linear-gradient(135deg, #f0f8ff 0%, #e6f3ff 100%) !important;
+  border: 3px dashed #667eea;
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
+}
+
+.backgroundWorkspace.dragging::before {
+  content: "📸 Drop image here to upload and analyze";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 24px;
+  color: #667eea;
+  font-weight: 600;
+  text-align: center;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 30px 50px;
+  border-radius: 12px;
+  pointer-events: none;
+}
+
+.mobileChat.dragging::before {
   content: "📸 Drop image here to upload and analyze";
   position: absolute;
   top: 50%;
@@ -142,46 +233,45 @@
   pointer-events: none;
 }
 
-/* Desktop: Bottom-aligned chat window with consistent round corners */
+/* Desktop: Hide mobile chat completely */
 @media (min-width: 769px) {
-  .chatContainer {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 600px;
-    height: 70vh;
-    max-height: 600px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  .mobileChat {
+    display: none !important;
+  }
+  
+  .desktopChatContainer {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   }
 }
 
-/* === Workspace Mode: Chat becomes bottom strip === */
-.workspaceMode .chatContainer {
-  position: fixed;
-  left: 50%;
-  bottom: 20px;
-  width: 500px;
-  max-width: 95vw;
-  height: 400px;
-  transform: translateX(-50%);
-  box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-  transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 15;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-}
+/* === Mobile Workspace Mode: Chat becomes bottom strip === */
+@media (max-width: 768px) {
+  .workspaceMode .mobileChat {
+    position: fixed;
+    left: 50%;
+    bottom: 20px;
+    width: 500px;
+    max-width: 95vw;
+    height: 400px;
+    transform: translateX(-50%);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 15;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
 
-.workspaceMode .chatContainer.collapsed {
-  height: 80px;
-}
+  .workspaceMode .mobileChat.collapsed {
+    height: 80px;
+  }
 
-.workspaceMode .chatContainer.collapsed .bellaZone,
-.workspaceMode .chatContainer.collapsed .messagesArea {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
+  .workspaceMode .mobileChat.collapsed .bellaZone,
+  .workspaceMode .mobileChat.collapsed .messagesArea {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
 }
 
 /* === Bella Zone (Upper-Left, Not Center) === */
@@ -348,17 +438,19 @@
   transition: none;
 }
 
-/* Workspace collapsed: Input maintains consistent appearance */
-.workspaceMode .chatContainer.collapsed .inputArea {
-  border-top: none;
-  border-radius: 20px;
-  cursor: pointer;
-  background: #fff;
-  flex-shrink: 0;
-}
+/* Mobile workspace collapsed: Input maintains consistent appearance */
+@media (max-width: 768px) {
+  .workspaceMode .mobileChat.collapsed .inputArea {
+    border-top: none;
+    border-radius: 20px;
+    cursor: pointer;
+    background: #fff;
+    flex-shrink: 0;
+  }
 
-.workspaceMode .chatContainer.collapsed .inputArea:hover {
-  background: #f8f9fa;
+  .workspaceMode .mobileChat.collapsed .inputArea:hover {
+    background: #f8f9fa;
+  }
 }
 
 /* === User Icon (Bottom-Right) === */
@@ -397,8 +489,12 @@
     display: none;
   }
   
+  .desktopChatContainer {
+    display: none;
+  }
+  
   /* Mobile: Full screen chat with no rounded corners */
-  .chatContainer {
+  .mobileChat {
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
@@ -411,7 +507,7 @@
     box-shadow: none !important;
   }
   
-  .workspaceMode .chatContainer {
+  .workspaceMode .mobileChat {
     width: 100vw !important;
     left: 0 !important;
     transform: none !important;
@@ -449,13 +545,13 @@
 }
 
 @media (max-width: 480px) {
-  .chatContainer {
+  .mobileChat {
     width: 100vw !important;
     left: 0 !important;
     border-radius: 0 !important;
   }
   
-  .workspaceMode .chatContainer {
+  .workspaceMode .mobileChat {
     width: 100vw !important;
     left: 0 !important;
     border-radius: 0 !important;
