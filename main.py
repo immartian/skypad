@@ -192,6 +192,12 @@ async def analyze_image_endpoint(
 
 @app.post("/chat-with-bella/", response_model=BellaChatResponse)
 async def chat_with_bella_endpoint(request: BellaChatRequest):
+    try:
+        import openai as openai_lib
+        has_openai = True
+    except ImportError:
+        has_openai = False
+    
     if not has_openai:
         return BellaChatResponse(response="", error="OpenAI library is not installed on the server.")
 
@@ -404,6 +410,12 @@ def analyze_image_with_google(image_bytes: bytes, credentials_path: str) -> Dict
 #     pass # Placeholder if the function is completely removed or commented out
 
 def chat_with_bella(message: str, api_key: str, chat_model: str = "gpt-3.5-turbo") -> str:
+    try:
+        import openai as openai_lib
+        has_openai = True
+    except ImportError:
+        has_openai = False
+    
     if not has_openai: # Should be caught by endpoint
         raise Exception("OpenAI library is not installed.")
     
@@ -434,4 +446,4 @@ if __name__ == "__main__":
     # app.mount("/static", StaticFiles(directory="static"), name="static") # Mount after all routes are defined
     # Use PORT environment variable if available (for Cloud Run), otherwise default to 8000 for local dev
     port = int(os.getenv("PORT", 8000))
-    uvicorn.run(app, host="::", port=port)
+    uvicorn.run(app, host="0.0.0.0", port=port)
