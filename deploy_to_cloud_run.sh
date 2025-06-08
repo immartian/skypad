@@ -94,16 +94,31 @@ if [ -f .env ]; then
   # Extract OpenAI API key
   OPENAI_API_KEY=$(grep -o 'OPENAI_API_KEY=.*' .env | cut -d '=' -f2)
   
+  # Extract Neo4j credentials
+  NEO4J_URI=$(grep -o 'NEO4J_URI=.*' .env | cut -d '=' -f2)
+  NEO4J_USERNAME=$(grep -o 'NEO4J_USERNAME=.*' .env | cut -d '=' -f2)
+  NEO4J_PASSWORD=$(grep -o 'NEO4J_PASSWORD=.*' .env | cut -d '=' -f2)
+  
   # Default values if not found
   if [ -z "$OPENAI_API_KEY" ]; then
     echo "Warning: OPENAI_API_KEY not found in .env file."
     OPENAI_API_KEY=""
   fi
   
+  if [ -z "$NEO4J_URI" ] || [ -z "$NEO4J_USERNAME" ] || [ -z "$NEO4J_PASSWORD" ]; then
+    echo "Warning: Some Neo4j credentials not found in .env file."
+    NEO4J_URI=""
+    NEO4J_USERNAME=""
+    NEO4J_PASSWORD=""
+  fi
+  
   echo "Environment variables loaded successfully."
 else
   echo "Warning: .env file not found. Deploying without environment variables."
   OPENAI_API_KEY=""
+  NEO4J_URI=""
+  NEO4J_USERNAME=""
+  NEO4J_PASSWORD=""
 fi
 
 # Deploy to Cloud Run with environment variables
@@ -115,7 +130,7 @@ gcloud run deploy skypad-ai \
   --allow-unauthenticated \
   --memory 2Gi \
   --timeout=300 \
-  --set-env-vars="OPENAI_API_KEY=$OPENAI_API_KEY"
+  --set-env-vars="OPENAI_API_KEY=$OPENAI_API_KEY,NEO4J_URI=$NEO4J_URI,NEO4J_USERNAME=$NEO4J_USERNAME,NEO4J_PASSWORD=$NEO4J_PASSWORD"
 
 # Check if deployment was successful
 if [ $? -ne 0 ]; then

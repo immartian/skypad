@@ -1,14 +1,15 @@
 import React, { useEffect, useRef } from 'react';
 import styles from './MessageList.module.css';
 import MessageItem from '../MessageItem/MessageItem';
-import type { Message } from '../ChatPage/ChatPage';
+import type { Message, ImageResult } from '../ChatPage/ChatPage';
 
 interface MessageListProps {
   messages: Message[];
   isOldMessages?: boolean;
+  onImageClick?: (image: ImageResult) => void;
 }
 
-const MessageList: React.FC<MessageListProps> = ({ messages, isOldMessages }) => {
+const MessageList: React.FC<MessageListProps> = ({ messages, isOldMessages, onImageClick }) => {
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const messageListRef = useRef<null | HTMLDivElement>(null);
 
@@ -40,6 +41,8 @@ const MessageList: React.FC<MessageListProps> = ({ messages, isOldMessages }) =>
           sender={msg.sender}
           isDimmed={isOldMessages}
           image={msg.image}
+          images={msg.images}
+          onImageClick={onImageClick}
         />
       ))}
       {!isOldMessages && <div ref={messagesEndRef} />}

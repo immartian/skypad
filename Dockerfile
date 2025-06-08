@@ -41,7 +41,7 @@ RUN touch /app/.env
 COPY sage-striker-294302-b248a695e8e5.json /app/google-credentials.json 
 
 # Copy the backend application code
-COPY main.py bella_prompt.py utils.py ./ 
+COPY main.py bella_prompt.py utils.py image_search.py ./ 
 
 # Copy the lattice directory (required by main.py)
 COPY lattice/ ./lattice/

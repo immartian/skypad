@@ -6,3 +6,11 @@ images/
 .venv_skypad/
 __pycache__/
 .venv
+lattice/
+
+# Build artifacts and generated files
+static/assets/
+frontend/dist/
+frontend/build/
+*.log
+*.tmp

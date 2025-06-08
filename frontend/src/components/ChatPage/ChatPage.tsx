@@ -5,12 +5,21 @@ import MessageList from '../MessageList/MessageList';
 import MessageInput from '../MessageInput/MessageInput';
 import OntologyVisualization from '../OntologyVisualization/OntologyVisualization';
 
+export interface ImageResult {
+  path: string;
+  description: string;
+  similarity_score: number;
+  thumbnail_url: string;
+  full_url: string;
+}
+
 export interface Message {
   id: string;
   text: string;
   sender: 'user' | 'bella';
   image?: string; // Base64 data URL or file path
   imageFile?: File; // Original file for analysis
+  images?: ImageResult[]; // Search results images
 }
 
 const BELLA_EMOJI = '🧘‍♀️'; // Or any other emoji/icon
@@ -24,6 +33,8 @@ const ChatPage: React.FC = () => {
   const [focusedEntities, setFocusedEntities] = useState<string[]>([]); // Track ontology focus
   const [rightPaneWidth, setRightPaneWidth] = useState(400); // Initial width in pixels
   const [isResizing, setIsResizing] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<ImageResult | null>(null); // For image modal
+  const [showImageModal, setShowImageModal] = useState(false); // Image modal state
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -91,6 +102,7 @@ const ChatPage: React.FC = () => {
         id: Date.now().toString() + '-bella',
         text: data.reply,
         sender: 'bella',
+        images: data.images || undefined, // Include image search results if present
       };
 
       setMessages((prevMessages) => [...prevMessages, bellaMessage]);
@@ -208,6 +220,16 @@ const ChatPage: React.FC = () => {
     }
     // Reset the input so the same file can be uploaded again
     e.target.value = '';
+  };
+
+  const handleImageClick = (image: ImageResult) => {
+    setSelectedImage(image);
+    setShowImageModal(true);
+  };
+
+  const closeImageModal = () => {
+    setShowImageModal(false);
+    setSelectedImage(null);
   };
 
   const { oldMessages, recentMessages } = useMemo(() => {
@@ -431,10 +453,10 @@ const ChatPage: React.FC = () => {
               
               <div className={styles.desktopMessagesArea}>
                 <div className={styles.oldMessagesArea}>
-                  <MessageList messages={oldMessages} isOldMessages={true} />
+                  <MessageList messages={oldMessages} isOldMessages={true} onImageClick={handleImageClick} />
                 </div>
                 <div className={styles.recentMessagesArea}>
-                  <MessageList messages={recentMessages} />
+                  <MessageList messages={recentMessages} onImageClick={handleImageClick} />
                 </div>
               </div>
               
@@ -496,12 +518,12 @@ const ChatPage: React.FC = () => {
         <div className={styles.messagesArea}>
           {/* Dimmed old messages */}
           <div className={styles.oldMessagesArea}>
-            <MessageList messages={oldMessages} isOldMessages={true} />
+            <MessageList messages={oldMessages} isOldMessages={true} onImageClick={handleImageClick} />
           </div>
           
           {/* Recent messages */}
           <div className={styles.recentMessagesArea}>
-            <MessageList messages={recentMessages} />
+            <MessageList messages={recentMessages} onImageClick={handleImageClick} />
           </div>
         </div>
 
@@ -532,6 +554,26 @@ const ChatPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Image Modal */}
+      {showImageModal && selectedImage && (
+        <div className={styles.imageModal} onClick={closeImageModal}>
+          <div className={styles.imageModalContent} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.closeButton} onClick={closeImageModal}>
+              ×
+            </button>
+            <img
+              src={selectedImage.full_url}
+              alt={selectedImage.description}
+              className={styles.modalImage}
+            />
+            <div className={styles.imageInfo}>
+              <h3>{selectedImage.description}</h3>
+              <p>Similarity: {(selectedImage.similarity_score * 100).toFixed(1)}%</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

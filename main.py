@@ -5,6 +5,7 @@ Skypad Image Tagging & Explanation - FastAPI Application
 import os
 import sys
 import json
+import base64
 import warnings
 from io import BytesIO
 from PIL import Image
@@ -15,19 +16,12 @@ from pydantic import BaseModel
 from typing import List, Optional, Dict, Any
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware # Import CORS middleware
-import openai
 from dotenv import load_dotenv
 from bella_prompt import BELLA_SYSTEM_PROMPT
+from image_search import ImageSearch
 
 # Load environment variables from .env file
 load_dotenv()
-
-# Initialize OpenAI client
-# Ensure your OPENAI_API_KEY is set in your .env file or environment variables
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
-if not openai.api_key:
-    print("Warning: OPENAI_API_KEY not found. OpenAI API calls will fail.")
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
@@ -47,6 +41,19 @@ try:
 except ImportError:
     has_google_vision = False
     print("Warning: Google Cloud Vision not installed. Google Vision API will not be available.")
+
+# Check if OpenAI is available
+try:
+    import openai
+    has_openai = True
+    # Initialize OpenAI client
+    # Ensure your OPENAI_API_KEY is set in your .env file or environment variables
+    openai.api_key = os.getenv("OPENAI_API_KEY")
+    if not openai.api_key:
+        print("Warning: OPENAI_API_KEY not found. OpenAI API calls will fail.")
+except ImportError:
+    has_openai = False
+    print("Warning: OpenAI library not installed. OpenAI API will not be available.")
 
 # Try to import CLIP dependencies - not critical
 # try:
@@ -138,6 +145,13 @@ class ChatMessage(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
+    images: Optional[List[Dict[str, Any]]] = None  # Add image search results
+
+class ImageSearchResult(BaseModel):
+    path: str
+    description: str
+    similarity_score: float
+    thumbnail_url: str
 
 class ImageAnalysisRequest(BaseModel):
     image: str  # Base64 encoded image
@@ -192,12 +206,6 @@ async def analyze_image_endpoint(
 
 @app.post("/chat-with-bella/", response_model=BellaChatResponse)
 async def chat_with_bella_endpoint(request: BellaChatRequest):
-    try:
-        import openai as openai_lib
-        has_openai = True
-    except ImportError:
-        has_openai = False
-    
     if not has_openai:
         return BellaChatResponse(response="", error="OpenAI library is not installed on the server.")
 
@@ -216,11 +224,56 @@ async def chat_with_bella(chat_message: ChatMessage):
     if not openai.api_key:
         raise HTTPException(status_code=500, detail="OpenAI API key not configured.")
     try:
+        # Check if this is a search query
+        message_lower = chat_message.message.lower()
+        search_triggers = ['search', 'find', 'show me', 'do we have', 'looking for', 'can you find']
+        is_search_query = any(trigger in message_lower for trigger in search_triggers)
+        
+        images_results = None
+        if is_search_query:
+            # Extract search terms (simple approach - remove trigger words)
+            search_query = chat_message.message
+            for trigger in ['search for', 'find me', 'show me', 'do we have', 'looking for', 'can you find']:
+                search_query = search_query.lower().replace(trigger, '').strip()
+            
+            # Perform image search
+            try:
+                search_engine = ImageSearch()
+                try:
+                    search_results = await search_engine.search_images(search_query, limit=6, min_similarity=0.15)
+                    
+                    # Convert to frontend format
+                    images_results = []
+                    for result in search_results:
+                        # Convert relative path to lattice URL
+                        if result['path'].startswith('/'):
+                            lattice_path = result['path'][1:]  # Remove leading slash
+                        else:
+                            lattice_path = result['path']
+                        
+                        images_results.append({
+                            'path': result['path'],
+                            'description': result['description'],
+                            'similarity_score': result['similarity_score'],
+                            'thumbnail_url': f"/lattice/{lattice_path}",
+                            'full_url': f"/lattice/{lattice_path}"
+                        })
+                finally:
+                    search_engine.close()
+            except Exception as e:
+                print(f"Error in image search during chat: {e}")
+                # Continue with regular chat response even if search fails
+        
         # Enhance the user message with ontology context if entities are focused
         enhanced_message = chat_message.message
         if chat_message.focused_entities:
             context_info = f"\n\nContext: The user is currently focusing on these ontology entities: {', '.join(chat_message.focused_entities)}. Please acknowledge these entities and provide relevant information about them and their relationships."
             enhanced_message += context_info
+
+        # Add image search context if we found results
+        if images_results:
+            image_count = len(images_results)
+            enhanced_message += f"\n\nNote: I found {image_count} relevant images for your search. I'll show these images along with my response. Please reference these images in your reply and mention what the user can do with them (click to view full size)."
 
         # For simplicity, we are not maintaining conversation history here yet.
         # In a more advanced setup, you would manage a list of messages (system, user, assistant).
@@ -236,7 +289,8 @@ async def chat_with_bella(chat_message: ChatMessage):
         if reply_content is None:
             # Handle cases where content might be None, though rare for successful completions
             raise HTTPException(status_code=500, detail="OpenAI API returned an empty message.")
-        return ChatResponse(reply=reply_content)
+        
+        return ChatResponse(reply=reply_content, images=images_results)
     except openai.APIError as e:
         print(f"OpenAI API Error: {e}")
         raise HTTPException(status_code=500, detail=f"An error occurred with the OpenAI API: {e}")
@@ -250,8 +304,6 @@ async def analyze_image_api(request: ImageAnalysisRequest):
         raise HTTPException(status_code=500, detail="OpenAI API key not configured.")
     
     try:
-        import base64
-        
         # Extract base64 data from data URL (remove data:image/jpeg;base64, prefix)
         if request.image.startswith('data:'):
             base64_data = request.image.split(',')[1]
@@ -291,11 +343,43 @@ async def analyze_image_api(request: ImageAnalysisRequest):
         print(f"An unexpected error occurred during image analysis: {e}")
         raise HTTPException(status_code=500, detail="An unexpected error occurred during image analysis.")
 
+@app.post("/api/search-images")
+async def search_images_endpoint(query: str, limit: int = 6):
+    """Search for images based on text query"""
+    try:
+        search_engine = ImageSearch()
+        try:
+            results = await search_engine.search_images(query, limit=limit, min_similarity=0.15)
+            
+            # Convert paths to URLs and add thumbnail URLs
+            enhanced_results = []
+            for result in results:
+                # Convert relative path to lattice URL
+                if result['path'].startswith('/'):
+                    lattice_path = result['path'][1:]  # Remove leading slash
+                else:
+                    lattice_path = result['path']
+                
+                enhanced_results.append({
+                    'path': result['path'],
+                    'description': result['description'],
+                    'similarity_score': result['similarity_score'],
+                    'thumbnail_url': f"/lattice/{lattice_path}",
+                    'full_url': f"/lattice/{lattice_path}"
+                })
+            
+            return {"results": enhanced_results}
+        finally:
+            search_engine.close()
+            
+    except Exception as e:
+        print(f"Error in image search: {e}")
+        raise HTTPException(status_code=500, detail=f"Error searching images: {str(e)}")
+
 # --- Analysis Functions (copied and adapted from app.py) ---
 
 def analyze_image_with_openai(image_bytes: bytes, api_key: str) -> Dict[str, Any]:
     try:
-        import base64
         base64_image = base64.b64encode(image_bytes).decode('utf-8')
         headers = {
             "Content-Type": "application/json",
@@ -410,12 +494,6 @@ def analyze_image_with_google(image_bytes: bytes, credentials_path: str) -> Dict
 #     pass # Placeholder if the function is completely removed or commented out
 
 def chat_with_bella(message: str, api_key: str, chat_model: str = "gpt-3.5-turbo") -> str:
-    try:
-        import openai as openai_lib
-        has_openai = True
-    except ImportError:
-        has_openai = False
-    
     if not has_openai: # Should be caught by endpoint
         raise Exception("OpenAI library is not installed.")
     
@@ -444,6 +522,6 @@ if __name__ == "__main__":
                 f.write("<html><body><h1>FastAPI Backend Running</h1><p>React frontend should replace this.</p></body></html>")
     
     # app.mount("/static", StaticFiles(directory="static"), name="static") # Mount after all routes are defined
-    # Use PORT environment variable if available (for Cloud Run), otherwise default to 8000 for local dev
-    port = int(os.getenv("PORT", 8000))
+    # Use PORT environment variable if available (for Cloud Run), otherwise default to 8080 for local dev
+    port = int(os.getenv("PORT", 8080))
     uvicorn.run(app, host="0.0.0.0", port=port)
